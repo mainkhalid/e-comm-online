@@ -1,0 +1,187 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Design tokens ─────────────────────────────────────────── */
+:root {
+  --navy:        #0F172A;
+  --navy-mid:    #1E3A8A;
+  --orange:      #FF6B2B;
+  --orange-dark: #E05520;
+  --bg:          #F8F9FB;
+  --card:        #FFFFFF;
+  --border:      #E2E8F0;
+  --text:        #0F172A;
+  --text-muted:  #64748B;
+  --text-light:  #94A3B8;
+  --success:     #16A34A;
+  --danger:      #DC2626;
+}
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  a { text-decoration: none; color: inherit; }
+  img { max-width: 100%; height: auto; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-light); }
+}
+
+@layer components {
+  /* ── Buttons ── */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5
+           text-white text-sm font-semibold rounded-lg
+           transition-all duration-200 whitespace-nowrap
+           active:scale-95;
+    background: var(--orange);
+    box-shadow: 0 4px 14px rgba(255,107,43,0.30);
+  }
+  .btn-primary:hover { background: var(--orange-dark); box-shadow: 0 4px 20px rgba(255,107,43,0.45); }
+
+  .btn-navy {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5
+           text-white text-sm font-semibold rounded-lg
+           transition-all duration-200 whitespace-nowrap active:scale-95;
+    background: var(--navy);
+  }
+  .btn-navy:hover { background: #162D6E; }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5
+           text-sm font-semibold rounded-lg border
+           transition-all duration-200 whitespace-nowrap active:scale-95;
+    border-color: var(--border);
+    color: var(--text);
+    background: var(--card);
+  }
+  .btn-outline:hover { border-color: var(--orange); color: var(--orange); }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2
+           text-sm font-medium rounded-lg
+           transition-all duration-200 whitespace-nowrap;
+    color: var(--text-muted);
+  }
+  .btn-ghost:hover { color: var(--orange); background: rgba(255,107,43,0.06); }
+
+  .btn-icon {
+    @apply flex items-center justify-center w-10 h-10 rounded-lg
+           transition-all duration-200;
+    color: var(--text-muted);
+  }
+  .btn-icon:hover { background: var(--bg); color: var(--navy); }
+
+  /* ── Cards ── */
+  .card {
+    @apply rounded-xl overflow-hidden;
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 3px rgba(15,23,42,0.06);
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
+  }
+  .card:hover { box-shadow: 0 10px 30px rgba(15,23,42,0.10); transform: translateY(-2px); }
+
+  /* ── Product card ── */
+  .product-card {
+    @apply relative flex flex-col rounded-xl overflow-hidden cursor-pointer;
+    background: var(--card);
+    border: 1px solid var(--border);
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
+  }
+  .product-card:hover { box-shadow: 0 12px 32px rgba(15,23,42,0.12); transform: translateY(-3px); }
+
+  /* ── Badges ── */
+  .badge-sale {
+    @apply absolute top-2.5 left-2.5 z-10 text-[10px] font-bold uppercase
+           tracking-widest px-2 py-1 rounded-full text-white;
+    background: var(--danger);
+  }
+  .badge-new {
+    @apply absolute top-2.5 left-2.5 z-10 text-[10px] font-bold uppercase
+           tracking-widest px-2 py-1 rounded-full;
+    background: var(--navy);
+    color: #fff;
+  }
+  .badge-featured {
+    @apply absolute top-2.5 left-2.5 z-10 text-[10px] font-bold uppercase
+           tracking-widest px-2 py-1 rounded-full;
+    background: var(--orange);
+    color: #fff;
+  }
+
+  /* ── Section heading ── */
+  .section-title {
+    @apply text-2xl font-bold relative pb-3;
+    color: var(--text);
+  }
+  .section-title::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-10 h-0.5 rounded-full;
+    background: var(--orange);
+  }
+
+  /* ── Form inputs ── */
+  .input {
+    @apply w-full px-4 py-2.5 text-sm rounded-lg outline-none transition-all duration-200;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .input:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(255,107,43,0.10); }
+  .input::placeholder { color: var(--text-light); }
+
+  /* ── Admin nav ── */
+  .admin-nav-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+           transition-all duration-150 cursor-pointer;
+    color: var(--text-muted);
+  }
+  .admin-nav-item:hover { background: rgba(15,23,42,0.04); color: var(--navy); }
+  .admin-nav-item.active { background: rgba(255,107,43,0.08); color: var(--orange); }
+
+  /* ── Skeleton ── */
+  .skeleton {
+    @apply rounded-lg animate-pulse;
+    background: linear-gradient(90deg, #E2E8F0 25%, #F0F4F8 50%, #E2E8F0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+  @keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+}
+
+@layer utilities {
+  .fade-up {
+    animation: fadeUp 0.5s ease forwards;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .text-muted   { color: var(--text-muted); }
+  .text-accent  { color: var(--orange); }
+  .text-success { color: var(--success); }
+  .text-danger  { color: var(--danger); }
+
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar { display: none; }
+}
