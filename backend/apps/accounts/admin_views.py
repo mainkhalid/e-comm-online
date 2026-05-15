@@ -6,7 +6,7 @@ from django.utils import timezone
 from datetime import timedelta
 from rest_framework import serializers
 
-from apps.accounts.models import User
+from apps.accounts.models import User, StoreSettings
 from apps.accounts.serializers import UserSerializer
 from apps.orders.models import Order
 from apps.products.models import Product, Category
@@ -129,3 +129,31 @@ class AdminReviewApproveView(APIView):
 class AdminReviewDeleteView(generics.DestroyAPIView):
     permission_classes = (permissions.IsAuthenticated, IsAdminUser)
     queryset = Review.objects.all()
+
+
+# ── Store Settings ───────────────────────────────────────────
+
+class StoreSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StoreSettings
+        exclude = ("id",)
+
+
+class AdminStoreSettingsView(APIView):
+    """Admin: retrieve and update store-wide settings (singleton)."""
+    permission_classes = (permissions.IsAuthenticated, IsAdminUser)
+
+    def get(self, request):
+        settings = StoreSettings.load()
+        serializer = StoreSettingsSerializer(settings, context={"request": request})
+        return Response(serializer.data)
+
+    def put(self, request):
+        settings = StoreSettings.load()
+        serializer = StoreSettingsSerializer(settings, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def patch(self, request):
+        return self.put(request)

@@ -8,11 +8,16 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from apps.accounts.admin_views import (
     AdminDashboardStatsView, AdminCustomerListView,
     AdminReviewListView, AdminReviewApproveView, AdminReviewDeleteView,
+    AdminStoreSettingsView,
 )
 from apps.orders.views import AdminOrderListView, AdminOrderUpdateView
 from apps.products.views import (
     AdminProductListCreateView, AdminProductUpdateDeleteView,
     AdminCategoryListCreateView, AdminCategoryUpdateDeleteView,
+    AdminBrandListCreateView, AdminBrandUpdateDeleteView,
+    AdminProductBulkActionView,
+    AdminProductExportCSV, AdminProductImportCSV,
+    AdminProductImageDeleteView,
 )
 
 urlpatterns = [
@@ -34,10 +39,27 @@ urlpatterns = [
     path("api/v1/admin/reviews/<int:pk>/", AdminReviewDeleteView.as_view(), name="admin-review-delete"),
     path("api/v1/admin/orders/", AdminOrderListView.as_view(), name="admin-orders"),
     path("api/v1/admin/orders/<str:order_number>/", AdminOrderUpdateView.as_view(), name="admin-order-update"),
+
+    # Products admin
     path("api/v1/admin/products/", AdminProductListCreateView.as_view(), name="admin-products"),
+    path("api/v1/admin/products/bulk/", AdminProductBulkActionView.as_view(), name="admin-product-bulk"),
+    path("api/v1/admin/products/export/", AdminProductExportCSV.as_view(), name="admin-product-export"),
+    path("api/v1/admin/products/import/", AdminProductImportCSV.as_view(), name="admin-product-import"),
     path("api/v1/admin/products/<slug:slug>/", AdminProductUpdateDeleteView.as_view(), name="admin-product-detail"),
+
+    # Categories admin
     path("api/v1/admin/categories/", AdminCategoryListCreateView.as_view(), name="admin-categories"),
     path("api/v1/admin/categories/<slug:slug>/", AdminCategoryUpdateDeleteView.as_view(), name="admin-category-detail"),
+
+    # Brands admin
+    path("api/v1/admin/brands/", AdminBrandListCreateView.as_view(), name="admin-brands"),
+    path("api/v1/admin/brands/<slug:slug>/", AdminBrandUpdateDeleteView.as_view(), name="admin-brand-detail"),
+
+    # Settings admin
+    path("api/v1/admin/settings/", AdminStoreSettingsView.as_view(), name="admin-settings"),
+
+    # Images admin
+    path("api/v1/admin/images/<int:pk>/", AdminProductImageDeleteView.as_view(), name="admin-image-delete"),
 
     # API Docs
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),

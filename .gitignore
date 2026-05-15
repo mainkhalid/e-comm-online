@@ -118,9 +118,6 @@ backend/tmp/
 frontend/*.local
 *.pid
 
-# ============================================
-# PROJECT SPECIFIC
-# ============================================
 
 # Uploads
 media/

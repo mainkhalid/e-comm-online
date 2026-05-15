@@ -2,33 +2,215 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { useSelector } from 'react-redux'
-import { Package, ChevronRight, ShoppingBag } from 'lucide-react'
+import {
+  Package, ChevronDown, ShoppingBag, Truck,
+  Clock, CheckCircle2, XCircle, RotateCcw,
+  Eye, RefreshCcw,
+} from 'lucide-react'
 import { getOrders } from '../../api/services'
+import { getCldMini } from '../../utils/cloudinaryUtils'
 
 const fmt = p => new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES', minimumFractionDigits: 0 }).format(p)
 
-const STATUS_COLORS = {
-  pending: 'bg-yellow-100 text-yellow-700',
-  confirmed: 'bg-blue-100 text-blue-700',
-  processing: 'bg-purple-100 text-purple-700',
-  shipped: 'bg-cyan-100 text-cyan-700',
-  delivered: 'bg-green-100 text-green-700',
-  cancelled: 'bg-red-100 text-red-700',
-  refunded: 'bg-gray-100 text-gray-700',
+const ORDER_STATUS = {
+  pending:    { label: 'Pending',    color: '#D97706', bg: 'rgba(217,119,6,0.08)',    icon: Clock },
+  confirmed:  { label: 'Confirmed',  color: '#2563EB', bg: 'rgba(37,99,235,0.08)',    icon: CheckCircle2 },
+  processing: { label: 'Processing', color: '#7C3AED', bg: 'rgba(124,58,237,0.08)',   icon: RefreshCcw },
+  shipped:    { label: 'Shipped',    color: '#0891B2', bg: 'rgba(8,145,178,0.08)',    icon: Truck },
+  delivered:  { label: 'Delivered',  color: '#16A34A', bg: 'rgba(22,163,74,0.08)',    icon: CheckCircle2 },
+  cancelled:  { label: 'Cancelled',  color: '#DC2626', bg: 'rgba(220,38,38,0.08)',    icon: XCircle },
+  refunded:   { label: 'Refunded',   color: '#6B7280', bg: 'rgba(107,114,128,0.08)', icon: RotateCcw },
 }
 
-const PAYMENT_COLORS = {
-  paid: 'bg-green-100 text-green-700',
-  unpaid: 'bg-yellow-100 text-yellow-700',
-  failed: 'bg-red-100 text-red-700',
+const PAYMENT_STATUS = {
+  pending:   { label: 'Unpaid',    color: '#D97706', bg: 'rgba(217,119,6,0.08)' },
+  completed: { label: 'Paid',      color: '#16A34A', bg: 'rgba(22,163,74,0.08)' },
+  failed:    { label: 'Failed',    color: '#DC2626', bg: 'rgba(220,38,38,0.08)' },
+  refunded:  { label: 'Refunded',  color: '#6B7280', bg: 'rgba(107,114,128,0.08)' },
+}
+
+/* ── Status timeline ── */
+const TIMELINE = ['pending','confirmed','processing','shipped','delivered']
+function StatusTimeline({ current }) {
+  const idx = TIMELINE.indexOf(current)
+  const cancelled = current === 'cancelled' || current === 'refunded'
+  return (
+    <div className="flex items-center gap-0 mt-4">
+      {TIMELINE.map((step, i) => {
+        const done   = idx >= i && !cancelled
+        const active = idx === i && !cancelled
+        const label  = ORDER_STATUS[step]?.label || step
+        return (
+          <div key={step} className="flex items-center flex-1">
+            <div className="flex flex-col items-center">
+              <div
+                className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold"
+                style={{
+                  background: cancelled ? 'var(--border)' : done ? 'var(--success)' : 'var(--bg)',
+                  border: `2px solid ${cancelled ? 'var(--border)' : done ? 'var(--success)' : 'var(--border)'}`,
+                  color: done && !cancelled ? 'white' : 'var(--text-muted)',
+                }}
+              >
+                {done && !cancelled ? '✓' : i + 1}
+              </div>
+              <p
+                className="text-[9px] font-semibold mt-1 text-center"
+                style={{ color: done && !cancelled ? 'var(--success)' : 'var(--text-muted)', lineHeight: 1.2 }}
+              >
+                {label}
+              </p>
+            </div>
+            {i < TIMELINE.length - 1 && (
+              <div
+                className="flex-1 h-0.5 mb-4"
+                style={{ background: done && idx > i && !cancelled ? 'var(--success)' : 'var(--border)' }}
+              />
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+/* ── Order row ── */
+function OrderRow({ order }) {
+  const [open, setOpen] = useState(false)
+  const status  = ORDER_STATUS[order.status]  || ORDER_STATUS.pending
+  const payment = PAYMENT_STATUS[order.payment_status] || PAYMENT_STATUS.pending
+  const Icon    = status.icon
+
+  return (
+    <div
+      className="rounded-2xl overflow-hidden transition-shadow"
+      style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
+    >
+      {/* Header row */}
+      <button
+        className="w-full text-left p-5 flex flex-wrap items-center gap-4"
+        onClick={() => setOpen(o => !o)}
+      >
+        {/* Order icon */}
+        <div
+          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+          style={{ background: status.bg }}
+        >
+          <Icon size={17} style={{ color: status.color }} />
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            <span className="text-sm font-bold font-mono" style={{ color: 'var(--text)' }}>
+              #{order.order_number}
+            </span>
+            {/* Status badge */}
+            <span
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+              style={{ background: status.bg, color: status.color }}
+            >
+              {status.label}
+            </span>
+            {/* Payment badge */}
+            <span
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+              style={{ background: payment.bg, color: payment.color }}
+            >
+              {payment.label}
+            </span>
+          </div>
+          <div className="flex items-center gap-3 text-xs" style={{ color: 'var(--text-muted)' }}>
+            <span>
+              {new Date(order.created_at).toLocaleDateString('en-KE', {
+                day: 'numeric', month: 'short', year: 'numeric',
+              })}
+            </span>
+            <span>·</span>
+            <span>{order.items?.length || 0} item{(order.items?.length || 0) !== 1 ? 's' : ''}</span>
+          </div>
+        </div>
+
+        {/* Total + chevron */}
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <span className="text-base font-bold" style={{ color: 'var(--navy)' }}>
+            {fmt(order.total_amount || order.total)}
+          </span>
+          <ChevronDown
+            size={16}
+            style={{ color: 'var(--text-muted)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
+          />
+        </div>
+      </button>
+
+      {/* Expanded detail */}
+      {open && (
+        <div className="border-t" style={{ borderColor: 'var(--border)' }}>
+          {/* Timeline */}
+          <div className="px-5 pt-4 pb-2">
+            <StatusTimeline current={order.status} />
+          </div>
+
+          {/* Items */}
+          <div className="border-t" style={{ borderColor: 'var(--border)' }}>
+            {(order.items || []).map((item, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-4 px-5 py-3 border-b last:border-0"
+                style={{ borderColor: 'var(--border)' }}
+              >
+                <div
+                  className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0"
+                  style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
+                >
+                  {item.primary_image && (
+                    <img src={getCldMini(item.primary_image)} alt="" className="w-full h-full object-contain p-1" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium line-clamp-1" style={{ color: 'var(--text)' }}>
+                    {item.product_name}
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                    Qty: {item.quantity} × {fmt(item.unit_price)}
+                  </p>
+                </div>
+                <span className="text-sm font-bold flex-shrink-0" style={{ color: 'var(--text)' }}>
+                  {fmt(item.subtotal || item.unit_price * item.quantity)}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Footer */}
+          <div
+            className="flex items-center justify-between px-5 py-4"
+            style={{ background: 'var(--bg)' }}
+          >
+            <div className="text-sm">
+              <span style={{ color: 'var(--text-muted)' }}>Total: </span>
+              <span className="font-bold" style={{ color: 'var(--navy)' }}>
+                {fmt(order.total_amount || order.total)}
+              </span>
+            </div>
+            <Link
+              to={`/order-confirmation/${order.order_number}`}
+              className="btn-ghost text-xs gap-1.5 py-2"
+            >
+              <Eye size={13} /> View Details
+            </Link>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function Orders() {
   const navigate = useNavigate()
   const { isAuthenticated } = useSelector(s => s.auth)
-  const [orders, setOrders] = useState([])
+  const [orders, setOrders]   = useState([])
   const [loading, setLoading] = useState(true)
-  const [selected, setSelected] = useState(null)
+  const [filter, setFilter]   = useState('all')
 
   useEffect(() => {
     if (!isAuthenticated) { navigate('/login'); return }
@@ -38,85 +220,58 @@ export default function Orders() {
       .finally(() => setLoading(false))
   }, [isAuthenticated])
 
+  const filters = ['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled']
+  const filtered = filter === 'all' ? orders : orders.filter(o => o.status === filter)
+
   return (
     <>
       <Helmet><title>My Orders — TechZone</title></Helmet>
-      <div className="min-h-screen bg-gray-50 py-12 px-4">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">My Orders</h1>
 
-          {loading ? (
-            <div className="space-y-4">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="bg-white rounded-2xl border border-gray-200 p-6 animate-pulse">
-                  <div className="h-4 bg-gray-200 rounded w-1/3 mb-3"></div>
-                  <div className="h-3 bg-gray-100 rounded w-1/2"></div>
-                </div>
-              ))}
-            </div>
-          ) : orders.length === 0 ? (
-            <div className="text-center py-20 bg-white rounded-2xl border border-gray-200">
-              <ShoppingBag size={48} className="text-gray-300 mx-auto mb-4" />
-              <h2 className="text-xl font-bold text-gray-900 mb-2">No orders yet</h2>
-              <p className="text-gray-500 mb-6">When you place an order, it will appear here.</p>
-              <Link to="/products" className="inline-flex items-center gap-2 bg-blue-600 text-white font-semibold px-6 py-2.5 rounded-lg hover:bg-blue-700 transition">
-                Start Shopping
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {orders.map(order => (
-                <div key={order.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-                  <button onClick={() => setSelected(selected?.id === order.id ? null : order)}
-                    className="w-full text-left p-6 flex items-center justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className="font-mono font-bold text-gray-900">{order.order_number}</span>
-                        <span className={`text-[11px] font-bold uppercase tracking-wide px-2.5 py-0.5 rounded-full ${STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-700'}`}>
-                          {order.status}
-                        </span>
-                        <span className={`text-[11px] font-bold uppercase tracking-wide px-2.5 py-0.5 rounded-full ${PAYMENT_COLORS[order.payment_status] || 'bg-gray-100 text-gray-700'}`}>
-                          {order.payment_status}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
-                        <span>{new Date(order.created_at).toLocaleDateString('en-KE', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
-                        <span>{order.items?.length || 0} item(s)</span>
-                      </div>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="font-bold text-gray-900 text-lg">{fmt(order.total)}</p>
-                      <ChevronRight size={16} className={`text-gray-400 mx-auto mt-1 transition-transform ${selected?.id === order.id ? 'rotate-90' : ''}`} />
-                    </div>
-                  </button>
+      {/* Filter tabs */}
+      <div className="flex gap-1.5 mb-5 overflow-x-auto pb-1">
+        {filters.map(f => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className="px-4 py-2 rounded-xl text-xs font-bold capitalize whitespace-nowrap transition-all flex-shrink-0"
+            style={{
+              background: filter === f ? 'var(--navy)' : 'var(--card)',
+              color: filter === f ? 'white' : 'var(--text-muted)',
+              border: `1px solid ${filter === f ? 'var(--navy)' : 'var(--border)'}`,
+            }}
+          >
+            {f === 'all' ? `All Orders (${orders.length})` : f}
+          </button>
+        ))}
+      </div>
 
-                  {/* Expanded detail */}
-                  {selected?.id === order.id && (
-                    <div className="border-t border-gray-100 px-6 py-5 bg-gray-50">
-                      <p className="text-xs font-bold uppercase tracking-wide text-gray-500 mb-3">Items</p>
-                      <div className="space-y-2">
-                        {order.items?.map((item, i) => (
-                          <div key={i} className="flex items-center justify-between py-2 text-sm">
-                            <div>
-                              <span className="text-gray-900 font-medium">{item.product_name}</span>
-                              <span className="text-gray-400 ml-2">× {item.quantity}</span>
-                            </div>
-                            <span className="font-semibold text-gray-900">{fmt(item.subtotal)}</span>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="flex justify-between mt-4 pt-4 border-t border-gray-200">
-                        <span className="font-bold text-gray-900">Total</span>
-                        <span className="font-bold text-gray-900 text-lg">{fmt(order.total)}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+      {loading ? (
+        <div className="space-y-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="skeleton rounded-2xl h-24" />
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
+        <div
+          className="text-center py-20 rounded-2xl"
+          style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
+        >
+          <ShoppingBag size={48} style={{ color: 'var(--border)', margin: '0 auto 16px' }} />
+          <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--text)' }}>
+            {filter === 'all' ? 'No orders yet' : `No ${filter} orders`}
+          </h3>
+          <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>
+            {filter === 'all' ? 'Your orders will appear here once you place one.' : 'Try a different filter.'}
+          </p>
+          {filter === 'all' && (
+            <Link to="/products" className="btn-primary">Start Shopping</Link>
           )}
         </div>
-      </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map(order => <OrderRow key={order.id} order={order} />)}
+        </div>
+      )}
     </>
   )
 }

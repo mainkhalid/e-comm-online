@@ -160,6 +160,38 @@ class ProductSpec(models.Model):
         return f"{self.label}: {self.value}"
 
 
+class ProductVariant(models.Model):
+    """Product variants (e.g., 16GB/512GB/Black for a laptop, 3m USB-C for a cable)."""
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="variants")
+    name = models.CharField(max_length=200, help_text="e.g. '16GB RAM / 512GB SSD / Space Gray'")
+    sku = models.CharField(max_length=50, unique=True)
+    price_override = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
+                                         help_text="Leave blank to use the parent product price")
+    stock_qty = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order"]
+
+    def __str__(self):
+        return f"{self.product.name} — {self.name}"
+
+    @property
+    def effective_price(self):
+        return self.price_override if self.price_override else self.product.price
+
+
+class VariantAttribute(models.Model):
+    """Key-value attributes for a variant (e.g., RAM: 16GB, Color: Space Gray)."""
+    variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, related_name="attributes")
+    attribute_name = models.CharField(max_length=100)
+    attribute_value = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f"{self.attribute_name}: {self.attribute_value}"
+
+
 class Tag(models.Model):
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True)

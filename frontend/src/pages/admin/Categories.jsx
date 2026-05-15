@@ -1,15 +1,173 @@
 import { useState, useEffect } from 'react'
-import { Tag, Plus, Edit2, Trash2, ChevronRight } from 'lucide-react'
-import { adminGetCategories, adminCreateCategory, adminUpdateCategory, adminDeleteCategory } from '../../api/services'
+import { Plus, Edit2, Trash2, FolderTree, ChevronRight, X, Check } from 'lucide-react'
 import toast from 'react-hot-toast'
+import {
+  adminGetCategories, adminCreateCategory,
+  adminUpdateCategory, adminDeleteCategory,
+} from '../../api/services'
+
+const EMPTY = { name: '', slug: '', parent: '', description: '', is_active: true }
+
+function CategoryModal({ cat, categories, onClose, onSaved }) {
+  const [form, setForm]   = useState(cat ? {
+    name: cat.name, slug: cat.slug || '', parent: cat.parent || '',
+    description: cat.description || '', is_active: cat.is_active !== false,
+  } : EMPTY)
+  const [saving, setSaving] = useState(false)
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  // Auto-slug
+  const handleName = (v) => {
+    set('name', v)
+    if (!cat) set('slug', v.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''))
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault(); setSaving(true)
+    try {
+      if (cat) { await adminUpdateCategory(cat.id, form) }
+      else      { await adminCreateCategory(form) }
+      toast.success(cat ? 'Category updated!' : 'Category created!')
+      onSaved(); onClose()
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to save')
+    } finally { setSaving(false) }
+  }
+
+  const parents = categories.filter(c => !cat || c.id !== cat.id)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(15,23,42,0.65)', backdropFilter: 'blur(4px)' }}
+      onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl animate-slide-down"
+        style={{ background: 'var(--card)' }}
+        onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-4 border-b"
+          style={{ borderColor: 'var(--border)', background: 'var(--bg)' }}>
+          <h3 className="text-sm font-bold" style={{ color: 'var(--text)' }}>
+            {cat ? 'Edit Category' : 'New Category'}
+          </h3>
+          <button onClick={onClose}><X size={17} style={{ color: 'var(--text-muted)' }} /></button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+          {[
+            { label: 'Category Name *', key: 'name', placeholder: 'e.g. Laptops', handler: e => handleName(e.target.value) },
+            { label: 'Slug *', key: 'slug', placeholder: 'e.g. laptops', handler: e => set('slug', e.target.value) },
+          ].map(({ label, key, placeholder, handler }) => (
+            <div key={key}>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-muted)' }}>{label}</label>
+              <input required value={form[key]} onChange={handler} placeholder={placeholder} className="input w-full text-sm" />
+            </div>
+          ))}
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-muted)' }}>
+              Parent Category
+            </label>
+            <select value={form.parent} onChange={e => set('parent', e.target.value)} className="input w-full text-sm">
+              <option value="">None (top-level)</option>
+              {parents.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-muted)' }}>Description</label>
+            <textarea value={form.description} onChange={e => set('description', e.target.value)}
+              rows={2} className="input w-full text-sm resize-none" placeholder="Optional description" />
+          </div>
+
+          <label className="flex items-center gap-2 cursor-pointer">
+            <div className="w-9 h-5 rounded-full relative transition-colors flex-shrink-0"
+              style={{ background: form.is_active ? 'var(--orange)' : 'var(--border)' }}
+              onClick={() => set('is_active', !form.is_active)}>
+              <div className="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform"
+                style={{ left: form.is_active ? '18px' : '2px' }} />
+            </div>
+            <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Active (visible in store)</span>
+          </label>
+
+          <div className="flex gap-3 pt-1">
+            <button type="submit" disabled={saving} className="btn-primary flex-1 justify-center disabled:opacity-60">
+              {saving ? 'Saving…' : cat ? 'Update' : 'Create Category'}
+            </button>
+            <button type="button" onClick={onClose} className="btn-outline px-5">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+function CategoryRow({ cat, depth = 0, all, onEdit, onDelete }) {
+  const [expanded, setExpanded] = useState(true)
+  const children = all.filter(c => String(c.parent) === String(cat.id))
+
+  return (
+    <>
+      <tr style={{ borderBottom: '1px solid var(--border)' }}
+        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg)'}
+        onMouseLeave={e => e.currentTarget.style.background = ''}>
+        <td className="px-4 py-3.5">
+          <div className="flex items-center gap-2" style={{ paddingLeft: `${depth * 20}px` }}>
+            {children.length > 0 ? (
+              <button onClick={() => setExpanded(o => !o)} className="flex-shrink-0">
+                <ChevronRight size={13}
+                  style={{ color: 'var(--text-muted)', transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }} />
+              </button>
+            ) : (
+              <div className="w-3.5 flex-shrink-0" />
+            )}
+            <FolderTree size={14} style={{ color: depth === 0 ? 'var(--orange)' : 'var(--text-muted)', flexShrink: 0 }} />
+            <span className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{cat.name}</span>
+            {children.length > 0 && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold"
+                style={{ background: 'rgba(255,107,43,0.08)', color: 'var(--orange)' }}>
+                {children.length}
+              </span>
+            )}
+          </div>
+        </td>
+        <td className="px-4 py-3.5 text-xs font-mono" style={{ color: 'var(--text-muted)' }}>{cat.slug}</td>
+        <td className="px-4 py-3.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+          {cat.product_count ?? '—'}
+        </td>
+        <td className="px-4 py-3.5">
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+            style={{
+              background: cat.is_active ? 'rgba(22,163,74,0.08)' : 'rgba(107,114,128,0.08)',
+              color: cat.is_active ? 'var(--success)' : 'var(--text-muted)',
+            }}>
+            {cat.is_active ? 'Active' : 'Inactive'}
+          </span>
+        </td>
+        <td className="px-4 py-3.5">
+          <div className="flex items-center gap-2">
+            <button onClick={() => onEdit(cat)}
+              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-blue-50 transition-colors">
+              <Edit2 size={13} style={{ color: '#2563EB' }} />
+            </button>
+            <button onClick={() => onDelete(cat.id, cat.name)}
+              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-50 transition-colors">
+              <Trash2 size={13} style={{ color: 'var(--danger)' }} />
+            </button>
+          </div>
+        </td>
+      </tr>
+
+      {/* Children */}
+      {expanded && children.map(child => (
+        <CategoryRow key={child.id} cat={child} depth={depth + 1} all={all} onEdit={onEdit} onDelete={onDelete} />
+      ))}
+    </>
+  )
+}
 
 export default function AdminCategories() {
   const [categories, setCategories] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [editCat, setEditCat] = useState(null)
-  const [form, setForm] = useState({ name: '', slug: '', description: '', is_active: true })
-  const [saving, setSaving] = useState(false)
+  const [loading, setLoading]   = useState(true)
+  const [modal, setModal]       = useState(null) // null=closed, 'new', or category obj
 
   const load = () => {
     setLoading(true)
@@ -21,113 +179,74 @@ export default function AdminCategories() {
 
   useEffect(() => { load() }, [])
 
-  const openCreate = () => {
-    setEditCat(null)
-    setForm({ name: '', slug: '', description: '', is_active: true })
-    setShowForm(true)
-  }
-
-  const openEdit = (cat) => {
-    setEditCat(cat)
-    setForm({ name: cat.name, slug: cat.slug, description: cat.description || '', is_active: cat.is_active !== false })
-    setShowForm(true)
-  }
-
-  const save = async (e) => {
-    e.preventDefault(); setSaving(true)
+  const handleDelete = async (id, name) => {
+    if (!confirm(`Delete "${name}"? Sub-categories will also be removed.`)) return
     try {
-      if (editCat) { await adminUpdateCategory(editCat.slug, form); toast.success('Category updated') }
-      else { await adminCreateCategory(form); toast.success('Category created') }
-      setShowForm(false); load()
-    } catch (err) {
-      const errs = err.response?.data
-      if (errs) Object.values(errs).flat().forEach(m => toast.error(String(m)))
-      else toast.error('Save failed')
-    } finally { setSaving(false) }
+      await adminDeleteCategory(id)
+      toast.success('Category deleted')
+      load()
+    } catch { toast.error('Could not delete — may have associated products') }
   }
 
-  const deleteCat = async (slug, name) => {
-    if (!confirm(`Delete "${name}"?`)) return
-    try { await adminDeleteCategory(slug); toast.success('Deleted'); load() }
-    catch { toast.error('Delete failed') }
-  }
-
-  const renderCategory = (cat, depth = 0) => (
-    <div key={cat.id}>
-      <div className={`flex items-center justify-between py-3 px-4 hover:bg-white/[0.03] transition-colors ${depth > 0 ? 'border-l-2 border-white/10 ml-6' : ''}`}>
-        <div className="flex items-center gap-3">
-          {depth > 0 && <ChevronRight size={12} className="text-[#5a5a6e]" />}
-          <div>
-            <p className="text-[13px] font-medium text-white">{cat.name}</p>
-            <p className="text-[11px] text-[#5a5a6e]">/{cat.slug}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-1">
-          <button onClick={() => openEdit(cat)} className="btn-icon w-8 h-8 text-[#6a6a7e] hover:text-white"><Edit2 size={14} /></button>
-          <button onClick={() => deleteCat(cat.slug, cat.name)} className="btn-icon w-8 h-8 text-[#6a6a7e] hover:text-[#e8192c]"><Trash2 size={14} /></button>
-        </div>
-      </div>
-      {cat.children && cat.children.map(child => renderCategory(child, depth + 1))}
-    </div>
-  )
+  // Top-level only (no parent or parent not in list)
+  const topLevel = categories.filter(c => !c.parent || !categories.find(p => String(p.id) === String(c.parent)))
 
   return (
     <div className="space-y-5 fade-up">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-serif text-2xl text-white mb-0.5">Categories</h2>
-          <p className="text-[13px] text-[#6a6a7e]">Manage product categories</p>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--text)' }}>Categories</h1>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>{categories.length} categories</p>
         </div>
-        <button onClick={openCreate} className="btn-primary gap-2">
-          <Plus size={15} /> Add category
+        <button onClick={() => setModal('new')} className="btn-primary text-sm">
+          <Plus size={15} /> Add Category
         </button>
       </div>
 
-      <div className="surface overflow-hidden">
-        {loading ? (
-          <div className="p-5 space-y-3">{[...Array(5)].map((_, i) => <div key={i} className="skeleton h-12" />)}</div>
-        ) : categories.length === 0 ? (
-          <div className="text-center py-16 text-[#5a5a6e]">
-            <Tag size={32} className="mx-auto mb-3 text-[#2a2a30]" />
-            <p className="text-[14px]">No categories yet</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-white/[0.04]">
-            {categories.map(cat => renderCategory(cat))}
-          </div>
-        )}
+      <div className="card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
+                {['Name', 'Slug', 'Products', 'Status', 'Actions'].map(h => (
+                  <th key={h} className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider"
+                    style={{ color: 'var(--text-muted)' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                [...Array(6)].map((_, i) => (
+                  <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
+                    {[...Array(5)].map((_, j) => (
+                      <td key={j} className="px-4 py-3.5">
+                        <div className="skeleton h-4 rounded" style={{ width: j === 0 ? '140px' : '70px' }} />
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : topLevel.length === 0 ? (
+                <tr><td colSpan={5} className="px-4 py-14 text-center">
+                  <FolderTree size={36} style={{ color: 'var(--border)', margin: '0 auto 12px' }} />
+                  <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No categories yet</p>
+                </td></tr>
+              ) : topLevel.map(cat => (
+                <CategoryRow key={cat.id} cat={cat} all={categories}
+                  onEdit={c => setModal(c)}
+                  onDelete={handleDelete} />
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* Create/Edit modal */}
-      {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-5">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowForm(false)} />
-          <div className="relative surface p-6 w-full max-w-lg">
-            <h3 className="font-serif text-xl text-white mb-5">{editCat ? 'Edit category' : 'New category'}</h3>
-            <form onSubmit={save} className="space-y-4">
-              <div>
-                <label className="label">Name *</label>
-                <input required className="input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. Laptops" />
-              </div>
-              <div>
-                <label className="label">Slug</label>
-                <input className="input" value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })} placeholder="auto-generated if empty" />
-              </div>
-              <div>
-                <label className="label">Description</label>
-                <textarea rows={3} className="input resize-none" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
-              </div>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="accent-[#e8192c] w-4 h-4" checked={form.is_active} onChange={e => setForm({ ...form, is_active: e.target.checked })} />
-                <span className="text-[13px] text-[#9898a6]">Active</span>
-              </label>
-              <div className="flex gap-3 pt-2">
-                <button type="submit" disabled={saving} className="btn-primary flex-1 py-2.5">{saving ? 'Saving…' : editCat ? 'Save changes' : 'Create'}</button>
-                <button type="button" onClick={() => setShowForm(false)} className="btn-ghost flex-1 py-2.5">Cancel</button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {modal !== null && (
+        <CategoryModal
+          cat={modal === 'new' ? null : modal}
+          categories={categories}
+          onClose={() => setModal(null)}
+          onSaved={load}
+        />
       )}
     </div>
   )
