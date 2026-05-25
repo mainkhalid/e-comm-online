@@ -1,5 +1,7 @@
 from rest_framework import serializers, generics, permissions
+from django.shortcuts import get_object_or_404
 from .models import Review
+from apps.products.models import Product
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -8,7 +10,7 @@ class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = ("id", "product", "user_name", "rating", "title", "body", "created_at")
-        read_only_fields = ("id", "user_name", "is_approved", "created_at")
+        read_only_fields = ("id", "product", "user_name", "is_approved", "created_at")
 
 
 class ReviewListCreateView(generics.ListCreateAPIView):
@@ -24,4 +26,6 @@ class ReviewListCreateView(generics.ListCreateAPIView):
         return Review.objects.filter(product__slug=product_slug, is_approved=True)
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        product_slug = self.kwargs.get("product_slug")
+        product = get_object_or_404(Product, slug=product_slug, is_active=True)
+        serializer.save(user=self.request.user, product=product)

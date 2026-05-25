@@ -105,7 +105,7 @@ export default function OrderConfirmation() {
   return (
     <>
       <Helmet>
-        <title>Order Confirmed #{orderNumber} — TechZone</title>
+        <title>Order Confirmed #{orderNumber} — Nixxon Technologies</title>
       </Helmet>
 
       <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>

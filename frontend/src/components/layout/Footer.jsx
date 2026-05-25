@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { homeAssets } from '../../assets/assets'
 import { MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube, MessageCircle } from 'lucide-react'
 
 const NAV_COLS = [
@@ -6,11 +7,9 @@ const NAV_COLS = [
     title: 'Shop',
     links: [
       ['Laptops',        '/products?category=laptops'],
-      ['Smartphones',    '/products?category=smartphones'],
-      ['Tablets',        '/products?category=tablets'],
-      ['Headphones',     '/products?category=headphones'],
-      ['Televisions',    '/products?category=tvs'],
-      ['Gaming',         '/products?category=gaming'],
+      ['Desktops',    '/products?category=desktops'],
+      ['Networking',    '/products?category=networking'],
+      ['Printers',         '/products?category=printers'],
       ['Accessories',    '/products?category=accessories'],
       ['🔥 Hot Deals',   '/products?on_sale=true'],
     ],
@@ -29,26 +28,23 @@ const NAV_COLS = [
   {
     title: 'Help & Info',
     links: [
-      ['About Us',        '#about'],
-      ['Contact Us',      'mailto:hello@techzone.co.ke'],
-      ['Shipping Policy', '#shipping'],
-      ['Return Policy',   '#returns'],
-      ['Warranty Info',   '#warranty'],
-      ['Terms & Conditions', '#terms'],
-      ['Privacy Policy',  '#privacy'],
+      ['About Us',        '/about'],
+      ['Contact Us',      '/contact'],
+      ['Shipping Policy', '/policies'],
+      ['Return Policy',   '/policies'],
+      ['Warranty Info',   '/warranty'],
+      ['Terms & Conditions', '/terms'],
     ],
   },
 ]
 
 const SOCIALS = [
   { icon: Facebook,       href: '#', label: 'Facebook' },
-  { icon: Twitter,        href: '#', label: 'Twitter' },
   { icon: Instagram,      href: '#', label: 'Instagram' },
-  { icon: Youtube,        href: '#', label: 'YouTube' },
   { icon: MessageCircle,  href: 'https://wa.me/254705125957', label: 'WhatsApp' },
 ]
 
-const PAYMENTS = ['M-Pesa', 'Visa', 'Mastercard', 'PayPal', 'Cash on Delivery']
+const PAYMENTS = ['M-Pesa', 'Equity Bank', 'Stanbic Bank', 'Cash on Delivery']
 
 export default function Footer() {
   const isExternal = (href) => href.startsWith('mailto:') || href.startsWith('http') || href.startsWith('#')
@@ -65,14 +61,14 @@ export default function Footer() {
             {/* Logo */}
             <Link to="/" className="inline-flex items-center gap-2.5 mb-5">
               <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white"
-                style={{ background: 'var(--orange)' }}
+                className="w-10 h-10 rounded-md flex items-center justify-center font-bold bg-white"
+                
               >
-                TZ
+                  <img src={homeAssets.logo} alt="Nixxon Technologies" />
               </div>
               <div>
-                <span className="font-bold text-lg text-white">Tech</span>
-                <span className="font-bold text-lg" style={{ color: 'var(--orange)' }}>Zone</span>
+                <span className="font-bold text-lg text-white">Nixxon</span>
+                <span className="font-bold text-lg" style={{ color: 'var(--orange)' }}>Tech</span>
               </div>
             </Link>
 
@@ -84,9 +80,9 @@ export default function Footer() {
             {/* Contact */}
             <div className="space-y-2.5 mb-7">
               {[
-                [MapPin, 'CBD Nairobi, Kenya'],
+                [MapPin, 'CBD,Moi Avenue ,Nairobi, Kenya'],
                 [Phone,  '+254 705 125 957'],
-                [Mail,   'hello@techzone.co.ke'],
+                [Mail,   'hello@nixxontechnologies.co.ke'],
               ].map(([Icon, text]) => (
                 <div key={text} className="flex items-center gap-2.5 text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
                   <Icon size={14} style={{ color: 'var(--orange)', flexShrink: 0 }} />

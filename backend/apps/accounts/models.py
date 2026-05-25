@@ -79,7 +79,7 @@ class StoreSettings(models.Model):
     country = models.CharField(max_length=100, blank=True, default="Kenya")
     currency_code = models.CharField(max_length=5, default="KES")
     currency_symbol = models.CharField(max_length=5, default="KSh")
-    logo = models.ImageField(upload_to="settings/", blank=True, null=True)
+    logo = models.ImageField(upload_to="techzone/settings/", blank=True, null=True)
     facebook_url = models.URLField(blank=True)
     twitter_url = models.URLField(blank=True)
     instagram_url = models.URLField(blank=True)

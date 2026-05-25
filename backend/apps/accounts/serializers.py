@@ -26,8 +26,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("id", "email", "first_name", "last_name", "phone", "full_name", "date_joined")
-        read_only_fields = ("id", "email", "date_joined")
+        fields = ("id", "email", "first_name", "last_name", "phone", "full_name", "date_joined","is_staff")
+        read_only_fields = ("id", "email", "date_joined", "is_staff")
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -42,3 +42,26 @@ class AddressSerializer(serializers.ModelSerializer):
         model = Address
         fields = "__all__"
         read_only_fields = ("user",)
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True, min_length=8)
+    new_password2 = serializers.CharField(write_only=True)
+
+    def validate_old_password(self, value):
+        user = self.context["request"].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Current password is incorrect.")
+        return value
+
+    def validate(self, data):
+        if data["new_password"] != data["new_password2"]:
+            raise serializers.ValidationError({"new_password": "Passwords do not match."})
+        return data
+
+    def save(self):
+        user = self.context["request"].user
+        user.set_password(self.validated_data["new_password"])
+        user.save()
+        return user

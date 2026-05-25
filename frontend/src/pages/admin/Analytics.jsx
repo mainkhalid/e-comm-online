@@ -93,10 +93,10 @@ export default function AdminAnalytics() {
       .finally(() => setLoading(false))
   }, [range])
 
-  const revenue      = data?.monthly_revenue || REVENUE
-  const topProducts  = data?.top_products    || TOP_PRODUCTS
-  const categoryPie  = data?.category_breakdown || CATEGORY_PIE
-  const paymentData  = data?.payment_methods || PAYMENT_DATA
+  const revenue      = data?.monthly_revenue    || []
+  const topProducts  = data?.top_products       || []
+  const categoryPie  = data?.category_breakdown || []
+  const paymentData  = data?.payment_methods    || []
 
   const totalRevenue = revenue.reduce((s, r) => s + r.revenue, 0)
   const totalOrders  = revenue.reduce((s, r) => s + r.orders, 0)
@@ -105,7 +105,7 @@ export default function AdminAnalytics() {
     { label: 'Total Revenue',  value: fmtK(totalRevenue), change: 12, icon: TrendingUp,   color: '#16A34A', bg: 'rgba(22,163,74,0.08)' },
     { label: 'Total Orders',   value: totalOrders.toLocaleString(), change: 8, icon: ShoppingCart, color: '#2563EB', bg: 'rgba(37,99,235,0.08)' },
     { label: 'Avg Order Value',value: fmt(totalRevenue / (totalOrders || 1)), change: 4, icon: Package, color: 'var(--orange)', bg: 'rgba(255,107,43,0.08)' },
-    { label: 'New Customers',  value: data?.new_customers ?? '312', change: 6, icon: Users, color: '#7C3AED', bg: 'rgba(124,58,237,0.08)' },
+    { label: 'New Customers',  value: (data?.new_customers ?? 0).toLocaleString(), change: 6, icon: Users, color: '#7C3AED', bg: 'rgba(124,58,237,0.08)' },
   ]
 
   return (
@@ -144,6 +144,11 @@ export default function AdminAnalytics() {
       {/* Revenue + Orders chart */}
       <div className="card p-5">
         <h2 className="text-sm font-bold mb-5" style={{ color: 'var(--text)' }}>Revenue & Orders</h2>
+        {revenue.length === 0 ? (
+          <div className="flex items-center justify-center h-[260px] text-sm" style={{ color: 'var(--text-muted)' }}>
+            No order data yet for this period
+          </div>
+        ) : (
         <ResponsiveContainer width="100%" height={260}>
           <AreaChart data={revenue} margin={{ top: 0, right: 0, left: -10, bottom: 0 }}>
             <defs>
@@ -172,6 +177,7 @@ export default function AdminAnalytics() {
               activeDot={{ r: 4, fill: 'var(--navy)' }} />
           </AreaChart>
         </ResponsiveContainer>
+        )}
       </div>
 
       {/* Bottom row: Top products + Category pie + Payment breakdown */}
@@ -180,6 +186,11 @@ export default function AdminAnalytics() {
         {/* Top products bar */}
         <div className="lg:col-span-2 card p-5">
           <h2 className="text-sm font-bold mb-5" style={{ color: 'var(--text)' }}>Top Products by Revenue</h2>
+          {topProducts.length === 0 ? (
+            <div className="flex items-center justify-center h-[220px] text-sm" style={{ color: 'var(--text-muted)' }}>
+              No sales data yet for this period
+            </div>
+          ) : (
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={topProducts} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
               <XAxis type="number" tick={{ fontSize: 10, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false}
@@ -190,6 +201,7 @@ export default function AdminAnalytics() {
               <Bar dataKey="revenue" name="Revenue" fill="var(--orange)" radius={[0, 5, 5, 0]} barSize={16} />
             </BarChart>
           </ResponsiveContainer>
+          )}
         </div>
 
         {/* Category pie + payment */}
@@ -197,6 +209,12 @@ export default function AdminAnalytics() {
           {/* Category breakdown */}
           <div className="card p-5">
             <h2 className="text-sm font-bold mb-4" style={{ color: 'var(--text)' }}>Sales by Category</h2>
+            {categoryPie.length === 0 ? (
+              <div className="flex items-center justify-center h-[140px] text-sm" style={{ color: 'var(--text-muted)' }}>
+                No data yet
+              </div>
+            ) : (
+            <>
             <ResponsiveContainer width="100%" height={140}>
               <PieChart>
                 <Pie data={categoryPie} cx="50%" cy="50%" outerRadius={60}
@@ -217,13 +235,20 @@ export default function AdminAnalytics() {
                 </div>
               ))}
             </div>
+            </>
+            )}
           </div>
 
           {/* Payment methods */}
           <div className="card p-5">
             <h2 className="text-sm font-bold mb-4" style={{ color: 'var(--text)' }}>Payment Methods</h2>
+            {paymentData.length === 0 ? (
+              <div className="flex items-center justify-center h-[80px] text-sm" style={{ color: 'var(--text-muted)' }}>
+                No payment data yet
+              </div>
+            ) : (
             <div className="space-y-2.5">
-              {PAYMENT_DATA.map(({ name, value }) => (
+              {paymentData.map(({ name, value }) => (
                 <div key={name}>
                   <div className="flex justify-between text-xs mb-1">
                     <span style={{ color: 'var(--text-muted)' }}>{name}</span>
@@ -231,11 +256,12 @@ export default function AdminAnalytics() {
                   </div>
                   <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--border)' }}>
                     <div className="h-full rounded-full transition-all"
-                      style={{ width: `${value}%`, background: name === 'M-Pesa' ? '#16A34A' : 'var(--navy)' }} />
+                      style={{ width: `${value}%`, background: name === 'M-Pesa Completed' ? '#16A34A' : name === 'M-Pesa Failed' ? '#DC2626' : 'var(--navy)' }} />
                   </div>
                 </div>
               ))}
             </div>
+            )}
           </div>
         </div>
       </div>

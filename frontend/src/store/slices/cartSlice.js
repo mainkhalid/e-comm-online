@@ -11,18 +11,28 @@ const set = (state, action) => {
   state.total     = action.payload.total      || 0
   state.itemCount = action.payload.item_count || 0
   state.loading   = false
+  state.error     = null
+}
+
+const reject = (state, action) => {
+  state.loading = false
+  state.error   = action.error?.message || 'Something went wrong'
 }
 
 const cartSlice = createSlice({
   name: 'cart',
-  initialState: { items: [], total: 0, itemCount: 0, loading: false },
+  initialState: { items: [], total: 0, itemCount: 0, loading: false, error: null },
   reducers: {},
   extraReducers: (b) => {
-    b.addCase(fetchCart.pending,     (s) => { s.loading = true })
+    b.addCase(fetchCart.pending,     (s) => { s.loading = true; s.error = null })
      .addCase(fetchCart.fulfilled,   set)
+     .addCase(fetchCart.rejected,    reject)
      .addCase(addItem.fulfilled,     set)
+     .addCase(addItem.rejected,      reject)
      .addCase(removeItem.fulfilled,  set)
-     .addCase(updateItem.fulfilled,  set)  // ← added
+     .addCase(removeItem.rejected,   reject)
+     .addCase(updateItem.fulfilled,  set)
+     .addCase(updateItem.rejected,   reject)
   },
 })
 

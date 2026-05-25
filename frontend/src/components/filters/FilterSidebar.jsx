@@ -71,8 +71,7 @@ export default function FilterSidebar({
   const currentPriceKey = `${currentMinPrice}|${currentMaxPrice}`
 
   const handlePriceRange = (min, max) => {
-    onSetParam('min_price', min)
-    onSetParam('max_price', max)
+    onSetParam('_batch_price', { min_price: min, max_price: max })
   }
 
   const currentPriceLabel = PRICE_RANGES.find(

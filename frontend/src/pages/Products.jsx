@@ -79,7 +79,13 @@ export default function Products() {
 
   const setParam = useCallback((key, value) => {
     const p = new URLSearchParams(searchParams)
-    value ? p.set(key, value) : p.delete(key)
+    if (key === '_batch_price' && typeof value === 'object') {
+      Object.entries(value).forEach(([k, v]) => {
+        v ? p.set(k, v) : p.delete(k)
+      })
+    } else {
+      value ? p.set(key, value) : p.delete(key)
+    }
     p.delete('page')
     setSearchParams(p)
   }, [searchParams, setSearchParams])
@@ -146,7 +152,7 @@ export default function Products() {
   return (
     <>
       <Helmet>
-        <title>{pageTitle} — TechZone Kenya</title>
+        <title>{pageTitle} — Nixxon Technologies</title>
         <meta name="description" content={`Shop ${pageTitle} in Kenya. Genuine products, M-Pesa payments, fast delivery.`} />
       </Helmet>
 
@@ -371,9 +377,7 @@ export default function Products() {
 
 /* ── List view card ── */
 function ListCard({ product, onQuickView }) {
-  const dispatch = undefined // import if needed separately
   const fmt = p => new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES', minimumFractionDigits: 0 }).format(p)
-  const { getCldThumb } = require === undefined ? { getCldThumb: u => u } : {}
 
   return (
     <a

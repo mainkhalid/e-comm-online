@@ -234,7 +234,7 @@ export default function ProductDetail() {
   return (
     <>
       <Helmet>
-        <title>{product.meta_title || `${product.name} — TechZone`}</title>
+        <title>{product.meta_title || `${product.name} — Nixxon Technologies`}</title>
         <meta name="description" content={product.meta_description || product.short_description} />
         {product.schema_json_ld && (
           <script type="application/ld+json">{JSON.stringify(product.schema_json_ld)}</script>

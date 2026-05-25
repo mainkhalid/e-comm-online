@@ -21,10 +21,16 @@ class ProductFilter(django_filters.FilterSet):
     max_price = django_filters.NumberFilter(field_name="price", lookup_expr="lte")
     in_stock = django_filters.BooleanFilter(method="filter_in_stock")
     on_sale = django_filters.BooleanFilter(method="filter_on_sale")
+    category__slug = django_filters.CharFilter(field_name="category__slug", lookup_expr="exact")
+    brand__slug = django_filters.CharFilter(field_name="brand__slug", lookup_expr="exact")
+    min_rating = django_filters.NumberFilter(method="filter_min_rating")
 
     class Meta:
         model = Product
-        fields = ["category", "brand", "is_featured", "is_active", "min_price", "max_price"]
+        fields = [
+            "category", "brand", "is_featured", "is_active",
+            "min_price", "max_price", "category__slug", "brand__slug",
+        ]
 
     def filter_in_stock(self, queryset, name, value):
         if value:
@@ -34,6 +40,12 @@ class ProductFilter(django_filters.FilterSet):
     def filter_on_sale(self, queryset, name, value):
         if value:
             return queryset.filter(sale_price__isnull=False)
+        return queryset
+
+    def filter_min_rating(self, queryset, name, value):
+        if value:
+            from django.db.models import Avg
+            return queryset.annotate(avg_rating=Avg("reviews__rating")).filter(avg_rating__gte=value)
         return queryset
 
 

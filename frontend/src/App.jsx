@@ -1,12 +1,14 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { Provider, useSelector } from 'react-redux'
+import { Provider, useSelector, useDispatch } from 'react-redux'
 import { HelmetProvider } from 'react-helmet-async'
 import { Toaster } from 'react-hot-toast'
 import { store } from './store'
+import { initAuth } from './store/slices/authSlice'
 
-import TopBar    from './components/layout/TopBar'
+import TopBar     from './components/layout/TopBar'
 import MainNavbar from './components/layout/MainNavbar'
-import Footer    from './components/layout/Footer'
+import Footer     from './components/layout/Footer'
 import AdminLayout from './components/admin/AdminLayout'
 
 import Home              from './pages/Home2'
@@ -17,13 +19,17 @@ import Register          from './pages/Register'
 import Cart              from './pages/Cart'
 import Checkout          from './pages/Checkout'
 import OrderConfirmation from './pages/OrderConfirmation'
+import Wishlist          from './pages/Wishlist'
+import Policies          from './pages/Policies'
+import Terms             from './pages/Terms'
+import Warranty          from './pages/Warranty'
+import Contact           from './pages/Contact'
+import About             from './pages/About'
 
-// Account — nested under AccountLayout sidebar
 import AccountLayout  from './pages/account/AccountLayout'
 import AccountProfile from './pages/account/Profile'
 import AccountOrders  from './pages/account/Orders'
 
-// Admin pages
 import AdminDashboard  from './pages/admin/Dashboard'
 import AdminProducts   from './pages/admin/Products'
 import AdminOrders     from './pages/admin/Orders'
@@ -32,6 +38,33 @@ import AdminCustomers  from './pages/admin/Customers'
 import AdminAnalytics  from './pages/admin/Analytics'
 import AdminBrands     from './pages/admin/Brands'
 import AdminSettings   from './pages/admin/Settings'
+
+
+// ── Route guards ─────────────────────────────────────────────
+
+/** Blocks unauthenticated users — redirects to /login */
+function RequireAuth({ children }) {
+  const { isAuthenticated, initializing } = useSelector(s => s.auth)
+  if (initializing) return <div className="min-h-screen flex items-center justify-center">
+    <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+  </div>
+  if (!isAuthenticated) return <Navigate to="/login" state={{ from: window.location.pathname }} replace />
+  return children
+}
+
+/** Blocks non-staff users from admin — redirects to / */
+function RequireAdmin({ children }) {
+  const { isAuthenticated, initializing, user } = useSelector(s => s.auth)
+  if (initializing) return <div className="min-h-screen flex items-center justify-center">
+    <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+  </div>
+  if (!isAuthenticated) return <Navigate to="/login" state={{ from: window.location.pathname }} replace />
+  if (!user?.is_staff) return <Navigate to="/" replace />
+  return children
+}
+
+
+// ── Store layout (with Navbar + Footer) ──────────────────────
 
 function StoreLayout() {
   return (
@@ -46,14 +79,28 @@ function StoreLayout() {
           <Route path="/login"                           element={<Login />} />
           <Route path="/register"                        element={<Register />} />
           <Route path="/cart"                            element={<Cart />} />
-          <Route path="/checkout"                        element={<Checkout />} />
-          <Route path="/order-confirmation/:orderNumber" element={<OrderConfirmation />} />
+          <Route path="/wishlist"                        element={<Wishlist />} />
+          <Route path="/policies"                        element={<Policies />} />
+          <Route path="/terms"                           element={<Terms />} />
+          <Route path="/warranty"                        element={<Warranty />} />
+          <Route path="/contact"                         element={<Contact />} />
+          <Route path="/about"                           element={<About />} />
 
-          {/* Account — shared sidebar layout */}
-          <Route path="/account" element={<AccountLayout />}>
-            <Route index           element={<Navigate to="/account/profile" replace />} />
-            <Route path="profile"  element={<AccountProfile />} />
-            <Route path="orders"   element={<AccountOrders />} />
+          {/* Protected customer routes */}
+          <Route path="/checkout" element={
+            <RequireAuth><Checkout /></RequireAuth>
+          } />
+          <Route path="/order-confirmation/:orderNumber" element={
+            <RequireAuth><OrderConfirmation /></RequireAuth>
+          } />
+
+          {/* Account — protected + shared sidebar layout */}
+          <Route path="/account" element={
+            <RequireAuth><AccountLayout /></RequireAuth>
+          }>
+            <Route index          element={<Navigate to="/account/profile" replace />} />
+            <Route path="profile" element={<AccountProfile />} />
+            <Route path="orders"  element={<AccountOrders />} />
           </Route>
 
           {/* Legacy redirects */}
@@ -66,28 +113,45 @@ function StoreLayout() {
   )
 }
 
+
+// ── Root app — initialises auth on mount ─────────────────────
+
+function AppRoutes() {
+  const dispatch = useDispatch()
+
+  // Verify token on every page load — sets isAuthenticated correctly
+  useEffect(() => {
+    dispatch(initAuth())
+  }, [dispatch])
+
+  return (
+    <Routes>
+      {/* Admin — no Navbar/Footer, staff only */}
+      <Route path="/admin" element={
+        <RequireAdmin><AdminLayout /></RequireAdmin>
+      }>
+        <Route index             element={<AdminDashboard />} />
+        <Route path="products"   element={<AdminProducts />} />
+        <Route path="orders"     element={<AdminOrders />} />
+        <Route path="categories" element={<AdminCategories />} />
+        <Route path="customers"  element={<AdminCustomers />} />
+        <Route path="brands"     element={<AdminBrands />} />
+        <Route path="settings"   element={<AdminSettings />} />
+        <Route path="analytics"  element={<AdminAnalytics />} />
+      </Route>
+
+      {/* Store */}
+      <Route path="/*" element={<StoreLayout />} />
+    </Routes>
+  )
+}
+
 export default function App() {
   return (
     <Provider store={store}>
       <HelmetProvider>
         <BrowserRouter>
-          <Routes>
-            {/* Admin — no Navbar/Footer */}
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index             element={<AdminDashboard />} />
-              <Route path="products"   element={<AdminProducts />} />
-              <Route path="orders"     element={<AdminOrders />} />
-              <Route path="categories" element={<AdminCategories />} />
-              <Route path="customers"  element={<AdminCustomers />} />
-              <Route path="brands"     element={<AdminBrands />} />
-              <Route path="settings"   element={<AdminSettings />} />
-              <Route path="analytics"  element={<AdminAnalytics />} />
-            </Route>
-
-            {/* Store */}
-            <Route path="/*" element={<StoreLayout />} />
-          </Routes>
-
+          <AppRoutes />
           <Toaster
             position="bottom-right"
             toastOptions={{

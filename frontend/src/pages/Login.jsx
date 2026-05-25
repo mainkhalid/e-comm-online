@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { Helmet } from 'react-helmet-async'
 import { Mail, Lock, ArrowRight } from 'lucide-react'
@@ -8,24 +8,48 @@ import toast from 'react-hot-toast'
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' })
-  const { loading } = useSelector(s => s.auth)
+  const { loading, isAuthenticated, user } = useSelector(s => s.auth)
   const dispatch = useDispatch()
   const navigate = useNavigate()
+  const location = useLocation()
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      if (user.is_staff) {
+        navigate('/admin', { replace: true })
+      } else {
+        const from = location.state?.from || '/'
+        navigate(from, { replace: true })
+      }
+    }
+  }, [isAuthenticated, user, navigate, location])
 
   const submit = async e => {
     e.preventDefault()
     try {
-      await dispatch(loginUser(form)).unwrap()
+      const result = await dispatch(loginUser(form)).unwrap()
       toast.success('Welcome back!')
-      navigate('/')
+      // Redirect admin to admin dashboard, customers to previous page or home
+      if (result?.is_staff) {
+        navigate('/admin', { replace: true })
+      } else {
+        const from = location.state?.from || '/'
+        navigate(from, { replace: true })
+      }
     } catch (err) {
-      toast.error(err?.detail || 'Invalid credentials')
+      const msg =
+        err?.detail ||
+        err?.non_field_errors?.[0] ||
+        err?.message ||
+        'Invalid credentials'
+      toast.error(msg)
     }
   }
 
   return (
     <>
-      <Helmet><title>Sign in — TechZone</title></Helmet>
+      <Helmet><title>Sign in — NixxonTechnologies</title></Helmet>
       <div className="min-h-[calc(100vh-200px)] flex items-center justify-center px-4 py-16 bg-gray-50">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
@@ -35,7 +59,7 @@ export default function Login() {
               </div>
             </Link>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back</h1>
-            <p className="text-gray-500">Sign in to your TechZone account</p>
+            <p className="text-gray-500">Sign in to Nixxon Technologies</p>
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">

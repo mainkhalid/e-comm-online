@@ -55,10 +55,14 @@ function extractCloudName(url) {
 export function getCldUrl(rawUrl, options = {}) {
   if (!rawUrl) return '/placeholder-product.png'
 
+  // Local Django media URL (dev or pre-migration images) — return as-is
+  // e.g. /media/products/image.jpg or http://localhost:8000/media/...
+  if (!rawUrl.includes('res.cloudinary.com')) return rawUrl
+
   const cloudName = extractCloudName(rawUrl)
   const publicId  = extractPublicId(rawUrl)
 
-  if (!cloudName || !publicId) return rawUrl // not a Cloudinary URL — return as-is
+  if (!cloudName || !publicId) return rawUrl
 
   const {
     width,

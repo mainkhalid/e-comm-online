@@ -2,7 +2,11 @@ import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useDispatch } from 'react-redux'
 import { Link } from 'react-router-dom'
-import { getFeaturedProducts } from '../api/services'
+import {
+  getFeaturedProducts,
+  getProductsByCategory,
+  getTopRatedProducts,
+} from '../api/services'
 import { addItem } from '../store/slices/cartSlice'
 import toast from 'react-hot-toast'
 
@@ -19,7 +23,7 @@ const PROMO_BANNERS = [
   {
     id: 1,
     eyebrow: 'Clearance Sale',
-    title: 'Refurbished Laptops',
+    title: 'ExUk Laptops',
     sub: 'Up to 40% off — tested & warranted',
     href: '/products?category=refurbished',
     bg: 'linear-gradient(135deg, #0F172A 0%, #1E3A8A 100%)',
@@ -78,15 +82,25 @@ function PromoBanners() {
 
 /* ─── Homepage ─────────────────────────────────────── */
 export default function Home() {
-  const [products, setProducts] = useState([])
-  const [loading, setLoading]   = useState(true)
-  const dispatch                = useDispatch()
+  const [featured, setFeatured]       = useState([])
+  const [laptops, setLaptops] = useState([])
+  const [desktops, setDesktops] = useState([])
+  const [topRated, setTopRated]       = useState([])
+  const [loading, setLoading]         = useState(true)
+  const dispatch                      = useDispatch()
 
   useEffect(() => {
-    getFeaturedProducts()
-      .then(({ data }) => setProducts(data.results || data))
-      .catch(() => setProducts([]))
-      .finally(() => setLoading(false))
+    Promise.allSettled([
+  getFeaturedProducts(),
+  getProductsByCategory('laptops'),
+  getProductsByCategory('desktops'),
+  getTopRatedProducts(),
+]).then(([featRes, newRes, saleRes, topRes]) => {
+      if (featRes.status === 'fulfilled') setFeatured(featRes.value.data.results || featRes.value.data)
+      if (newRes.status === 'fulfilled') setNewArrivals((newRes.value.data.results || newRes.value.data))
+      if (saleRes.status === 'fulfilled') setOnSale((saleRes.value.data.results || saleRes.value.data))
+      if (topRes.status === 'fulfilled') setTopRated((topRes.value.data.results || topRes.value.data))
+    }).finally(() => setLoading(false))
   }, [])
 
   const handleAddToCart = (productId) => {
@@ -99,31 +113,54 @@ export default function Home() {
   return (
     <>
       <Helmet>
-        <title>TechZone Kenya — Laptops, Phones, Gadgets & More</title>
+        <title>Nixxon Technologies — Laptops, Desktops, Gadgets & More</title>
         <meta name="description" content="Shop the latest laptops, smartphones, tablets, and accessories in Kenya. Genuine products, M-Pesa payments, fast nationwide delivery." />
       </Helmet>
 
-      {/* Hero + countdown */}
       <HeroSection />
-
-      {/* Category grid */}
       <PopularDevices />
-
-      {/* Promo banners */}
       <PromoBanners />
 
-      {/* Featured products carousel */}
-      {!loading && products.length > 0 && (
-        <FeaturedProductsCarousel
-          products={products}
-          onAddToCart={handleAddToCart}
-          title="Featured Products"
-        />
-      )}
       {loading && (
         <div className="py-12 flex justify-center">
           <LoadingSpinner />
         </div>
+      )}
+
+      {/* Featured products */}
+      {!loading && featured.length > 0 && (
+        <FeaturedProductsCarousel
+          products={featured}
+          onAddToCart={handleAddToCart}
+          title="Featured Products"
+        />
+      )}
+
+      {/* Laptops */}
+{!loading && laptops.length > 0 && (
+  <FeaturedProductsCarousel
+    products={laptops}
+    onAddToCart={handleAddToCart}
+    title="💻 Laptops"
+  />
+)}
+
+{/* Desktops */}
+{!loading && desktops.length > 0 && (
+  <FeaturedProductsCarousel
+    products={desktops}
+    onAddToCart={handleAddToCart}
+    title="🖥️ Desktops"
+  />
+)}
+
+      {/* Top Rated */}
+      {!loading && topRated.length > 0 && (
+        <FeaturedProductsCarousel
+          products={topRated}
+          onAddToCart={handleAddToCart}
+          title="⭐ Top Rated"
+        />
       )}
 
       {/* Brand carousel */}

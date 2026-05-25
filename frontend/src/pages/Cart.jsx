@@ -41,7 +41,7 @@ export default function Cart() {
   if (!isAuthenticated) {
     return (
       <>
-        <Helmet><title>Cart — TechZone</title></Helmet>
+        <Helmet><title>Cart — Nixxon Technologies</title></Helmet>
         <div
           className="min-h-screen flex items-center justify-center px-4"
           style={{ background: 'var(--bg)' }}

@@ -21,14 +21,17 @@ DJANGO_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
-    "django.contrib.staticfiles",
+    "cloudinary_storage",
+    "django.contrib.staticfiles",  
     "django.contrib.sitemaps",
+    "cloudinary", 
 ]
 
 THIRD_PARTY_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
+     "rest_framework_simplejwt.token_blacklist", 
     "django_filters",
     "mptt",
     "drf_spectacular",
@@ -42,6 +45,7 @@ LOCAL_APPS = [
     "apps.reviews",
     "apps.seo",
 ]
+
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -99,12 +103,21 @@ USE_I18N = True
 USE_TZ = True
 
 # Static & Media files
+STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+CLOUDINARY_STORAGE = {
+    "CLOUD_NAME": env("CLOUDINARY_CLOUD_NAME"),
+    "API_KEY":    env("CLOUDINARY_API_KEY"),
+    "API_SECRET": env("CLOUDINARY_API_SECRET"),
+}
+
+DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage" 
+
+CLOUDINARY_URL = f"cloudinary://{env('CLOUDINARY_API_KEY')}:{env('CLOUDINARY_API_SECRET')}@{env('CLOUDINARY_CLOUD_NAME')}"
+
+
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

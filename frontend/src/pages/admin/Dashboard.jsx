@@ -105,32 +105,32 @@ export default function AdminDashboard() {
   const STATS = [
     {
       label: 'Total Revenue',
-      value: stats?.total_revenue ? fmt(stats.total_revenue) : 'KSh 2.4M',
-      change: stats?.revenue_change ?? 12,
+      value: stats?.total_revenue ? fmt(stats.total_revenue) : 'KSh 0',
+      change: stats?.revenue_change ?? 0,
       icon: TrendingUp,
       color: '#16A34A',
       bg: 'rgba(22,163,74,0.08)',
     },
     {
       label: 'Total Orders',
-      value: stats?.total_orders?.toLocaleString() ?? '1,287',
-      change: stats?.orders_change ?? 5,
+      value: stats?.total_orders?.toLocaleString() ?? '0',
+      change: stats?.orders_change ?? 0,
       icon: ShoppingCart,
       color: '#2563EB',
       bg: 'rgba(37,99,235,0.08)',
     },
     {
       label: 'Customers',
-      value: stats?.total_customers?.toLocaleString() ?? '3,456',
-      change: stats?.customers_change ?? 8,
+      value: stats?.total_customers?.toLocaleString() ?? '0',
+      change: stats?.customers_change ?? 0,
       icon: Users,
       color: '#7C3AED',
       bg: 'rgba(124,58,237,0.08)',
     },
     {
       label: 'Products',
-      value: stats?.total_products?.toLocaleString() ?? '542',
-      change: stats?.products_change ?? 2,
+      value: stats?.total_products?.toLocaleString() ?? '0',
+      change: stats?.products_change ?? 0,
       icon: Package,
       color: 'var(--orange)',
       bg: 'rgba(255,107,43,0.08)',
@@ -139,10 +139,10 @@ export default function AdminDashboard() {
 
   /* Quick action items */
   const QUICK = [
-    { icon: Zap,          label: 'Pending Orders',   count: stats?.pending_orders ?? 12, color: '#D97706', to: '/admin/orders?status=pending' },
-    { icon: Clock,        label: 'Low Stock Items',  count: stats?.low_stock ?? 5,       color: '#DC2626', to: '/admin/products?stock=low' },
-    { icon: CheckCircle2, label: 'Delivered Today',  count: stats?.delivered_today ?? 8, color: '#16A34A', to: '/admin/orders?status=delivered' },
-    { icon: Truck,        label: 'Shipped Today',    count: stats?.shipped_today ?? 14,  color: '#0891B2', to: '/admin/orders?status=shipped' },
+    { icon: Zap,          label: 'Pending Orders',   count: stats?.pending_orders  ?? 0, color: '#D97706', to: '/admin/orders?status=pending' },
+    { icon: Clock,        label: 'Low Stock Items',  count: stats?.low_stock       ?? 0, color: '#DC2626', to: '/admin/products?stock=low' },
+    { icon: CheckCircle2, label: 'Delivered Today',  count: stats?.delivered_today ?? 0, color: '#16A34A', to: '/admin/orders?status=delivered' },
+    { icon: Truck,        label: 'Shipped Today',    count: stats?.shipped_today   ?? 0, color: '#0891B2', to: '/admin/orders?status=shipped' },
   ]
 
   return (

@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux'
 import { useState } from 'react'
 
 const SHIPPING_NOTICES = [
-  '🚚 Free shipping on orders over KSH 5,000 — Kenya-wide delivery',
+  '🚚 Free shipping on orders over KSH 100,000 — Kenya-wide delivery',
   '🔒 Secure M-Pesa & card payments — 100% safe checkout',
   '↩️ 30-day hassle-free returns on all products',
   '⚡ Same-day dispatch for orders placed before 2 PM',
@@ -15,9 +15,9 @@ export default function TopBar() {
   const [noticeIdx] = useState(0)
 
   return (
-    <div style={{ background: 'var(--navy)' }} className="hidden sm:block text-white">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between h-9 text-xs">
+    <div style={{ background: 'var(--navy)' }} className="hidden sm:block text-white ">
+      <div className="max-w-7xl mx-auto px-4 ">
+        <div className="flex items-center justify-between h-9 text-s ">
 
           {/* Left — scrolling shipping notice */}
           <div className="flex items-center gap-6 overflow-hidden">
@@ -40,11 +40,11 @@ export default function TopBar() {
               +254 705 125 957
             </a>
             <a
-              href="mailto:hello@techzone.co.ke"
+              href="mailto:hello@nixxontechnologies.co.ke"
               className="flex items-center gap-1.5 text-slate-300 hover:text-white transition-colors"
             >
               <Mail size={11} />
-              hello@techzone.co.ke
+              hello@nixxontechnologies.co.ke
             </a>
 
             <div className="w-px h-3 bg-white/20" />

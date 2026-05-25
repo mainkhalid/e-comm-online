@@ -77,7 +77,7 @@ function StepBar({ current }) {
 }
 
 /* ── M-Pesa polling UI ─────────────────────────────── */
-function MpesaPoller({ orderNumber, phone, onSuccess, onFail }) {
+function MpesaPoller({ orderNumber, phone, onSuccess, onFail, stkFailed, onRetryStk }) {
   const [status, setStatus]   = useState('pending') // pending | checking | success | failed
   const [attempts, setAttempts] = useState(0)
   const [elapsed, setElapsed] = useState(0)
@@ -102,7 +102,7 @@ function MpesaPoller({ orderNumber, phone, onSuccess, onFail }) {
       })
       try {
         const { data } = await checkPaymentStatus(orderNumber)
-        if (data.status === 'completed' || data.payment_status === 'completed') {
+        if (data.status === 'completed' || data.payment_status === 'paid') {
           clearInterval(intervalRef.current)
           clearInterval(timerRef.current)
           setStatus('success')
@@ -175,6 +175,21 @@ function MpesaPoller({ orderNumber, phone, onSuccess, onFail }) {
             Enter your M-Pesa PIN on your phone to complete payment.
             <br />Do not close this page.
           </p>
+
+          {stkFailed && (
+            <div className="mt-5 p-4 rounded-xl" style={{ background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.15)' }}>
+              <p className="text-xs mb-3" style={{ color: 'var(--danger)' }}>
+                ⚠️ The M-Pesa prompt may not have been sent. You can retry below.
+              </p>
+              <button
+                onClick={onRetryStk}
+                className="btn-primary text-sm py-2 px-5"
+                style={{ background: 'var(--danger)' }}
+              >
+                Retry STK Push
+              </button>
+            </div>
+          )}
         </>
       ) : status === 'success' ? (
         <>
@@ -222,6 +237,7 @@ export default function Checkout() {
   const [notes, setNotes]           = useState('')
   const [showAddrForm, setShowAddrForm] = useState(false)
   const [editAddr, setEditAddr]     = useState(null)
+  const [stkFailed, setStkFailed]   = useState(false)
 
   const [addrForm, setAddrForm] = useState({
     full_name: '', phone: '', street: '', city: '',
@@ -296,7 +312,11 @@ export default function Checkout() {
       // Initiate STK push
       try {
         await initiatePayment({ order_number: order.order_number, phone_number: payPhone })
-      } catch { /* still proceed to polling UI */ }
+        setStkFailed(false)
+      } catch (stkErr) {
+        setStkFailed(true)
+        toast.error('M-Pesa prompt failed to send. You can retry from the payment screen.')
+      }
       dispatch(fetchCart())
       setStep(3) // show polling UI
     } catch (err) {
@@ -316,7 +336,7 @@ export default function Checkout() {
   /* ── Render ── */
   return (
     <>
-      <Helmet><title>Checkout — TechZone</title></Helmet>
+      <Helmet><title>Checkout — Nixxon Technologies</title></Helmet>
 
       <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
         {/* Topbar */}
@@ -624,6 +644,16 @@ export default function Checkout() {
                   phone={payPhone}
                   onSuccess={handlePaySuccess}
                   onFail={handlePayFail}
+                  stkFailed={stkFailed}
+                  onRetryStk={async () => {
+                    try {
+                      await initiatePayment({ order_number: orderNumber, phone_number: payPhone })
+                      setStkFailed(false)
+                      toast.success('M-Pesa prompt sent! Check your phone.')
+                    } catch {
+                      toast.error('Retry failed. Please try again or pay from your orders page.')
+                    }
+                  }}
                 />
               </div>
             </div>
@@ -637,7 +667,7 @@ export default function Checkout() {
 /* ── Mini order summary sidebar ── */
 function MiniOrderSummary({ items, total }) {
   const fmt = p => new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES', minimumFractionDigits: 0 }).format(p)
-  const shipping = total >= 5000 ? 0 : 300
+  const shipping = total >= 10000 ? 0 : 300
 
   return (
     <div
@@ -683,7 +713,7 @@ function MiniOrderSummary({ items, total }) {
         </div>
         <div className="flex items-center gap-2 mt-4 pt-4 border-t text-xs" style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
           <Truck size={12} style={{ color: 'var(--success)' }} />
-          {total >= 5000 ? 'Free delivery included!' : `KSh ${(5000 - total).toLocaleString()} away from free delivery`}
+          {total >= 10000 ? 'Free delivery included!' : `KSh ${(10000 - total).toLocaleString()} away from free delivery`}
         </div>
       </div>
     </div>

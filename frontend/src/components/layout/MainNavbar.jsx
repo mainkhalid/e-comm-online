@@ -3,11 +3,10 @@ import { Search, ShoppingCart, Menu, X } from 'lucide-react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useState } from 'react'
 import { logout } from '../../store/slices/authSlice'
+import { homeAssets } from '../../assets/assets'
 
 const categories = [
-  'GAMING', 'SPORTS & FITNESS', 'FUN & GAMES', 'POWER & ELECTRICALS',
-  'OFFICE SOLUTIONS', 'SATELLITE COMMUNICATION', 'REFURBISHED', 'SMART HOME',
-  'SURVEILLANCE SYSTEM', 'ENGINEERING & SURVEYING', 'SOFTWARE'
+  'Laptops', 'Desktops', 'Tablets', 'Printers','All-in-Ones','Monitors','Networking','Chargers','Audio','Wearables','Webcams','Accessories'
 ]
 
 export default function MainNavbar() {
@@ -31,15 +30,16 @@ export default function MainNavbar() {
   }
 
   return (
-    <nav className="bg-white shadow-sm">
+    <nav className="bg-white shadow-sm  sticky top-0 z-50">
       {/* Main Header */}
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-          <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-green-700 rounded flex items-center justify-center shadow">
-            <span className="text-white font-bold">T</span>
+          <div className="w-12 h12">
+            <img src={homeAssets.logo} alt="Nixxon Technologies" />
           </div>
-          <span className="font-bold text-lg text-gray-900 hidden sm:inline">E-comm</span>
+          <span className="font-bold text-lg text-red-500 hidden sm:inline">Nixxon</span>
+          <span className='text-gray-900'>Technologies</span>
         </Link>
 
         {/* Search Bar */}
@@ -50,11 +50,11 @@ export default function MainNavbar() {
               placeholder="Search for products..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 rounded border border-gray-300 focus:outline-none focus:border-green-600 text-sm"
+              className="w-full px-4 py-2 rounded border border-gray-300 focus:outline-none focus:border-orange-300 text-sm"
             />
             <button
               type="submit"
-              className="absolute right-0 top-0 h-full px-4 text-gray-400 hover:text-green-600"
+              className="absolute right-0 top-0 h-full px-4 text-gray-400 hover:text-orange-400"
             >
               <Search size={18} />
             </button>
@@ -97,7 +97,7 @@ export default function MainNavbar() {
             <Link
               key={cat}
               to={`/products?category=${cat.toLowerCase()}`}
-              className="text-xs font-semibold text-gray-700 hover:text-green-600 py-2 border-b-2 border-transparent hover:border-green-600 transition"
+              className="text-sm font-semibold text-gray-700 hover:text-orange-400 py-2 border-b-2 border-transparent hover:border-orange-400 transition"
             >
               {cat}
             </Link>
