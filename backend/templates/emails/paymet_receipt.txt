@@ -1,0 +1,11 @@
+Hi {{ order.user.first_name }},
+ 
+Payment received for order {{ order.order_number }}.
+ 
+M-Pesa Receipt: {{ payment.mpesa_receipt_number }}
+Amount Paid:    KSh {{ payment.amount }}
+ 
+Your order is now being processed.
+ 
+Thank you!
+Nixxon Technologies

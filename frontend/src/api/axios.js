@@ -1,20 +1,23 @@
 import axios from 'axios'
 
+const BASE_URL = import.meta.env.VITE_API_URL || '/api/v1'
+
 const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
 })
 
-// ── Request interceptor — attach access token ─────────────────
+// ── Attach token ─────────────────────────────────────────────
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token')
-  if (token) config.headers.Authorization = `Bearer ${token}`
+  if (token) {
+    config.headers = config.headers || {}
+    config.headers.Authorization = `Bearer ${token}`
+  }
   return config
 })
 
-// ── Refresh token queue — prevents race conditions ────────────
-// If multiple requests fail with 401 simultaneously, only ONE
-// refresh call is made. Others wait for it to complete.
+// ── Refresh queue ────────────────────────────────────────────
 let isRefreshing = false
 let failedQueue = []
 
@@ -26,29 +29,30 @@ function processQueue(error, token = null) {
   failedQueue = []
 }
 
-// ── Response interceptor — handle 401 with token refresh ──────
+// ── Response interceptor ─────────────────────────────────────
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config
+    const url = original?.url || ''
 
-    // Only handle 401s that haven't been retried yet
-    // Also skip the refresh endpoint itself to avoid infinite loop
+    // Ignore non-401 errors + already retried requests
     if (
       error.response?.status !== 401 ||
       original._retry ||
-      original.url?.includes('/auth/token/refresh/') ||
-      original.url?.includes('/auth/logout/')
+      url.includes('/auth/token/refresh/') ||
+      url.includes('/auth/logout/')
     ) {
       return Promise.reject(error)
     }
 
+    // Queue requests while refreshing
     if (isRefreshing) {
-      // Queue this request until refresh completes
       return new Promise((resolve, reject) => {
         failedQueue.push({ resolve, reject })
       })
         .then((token) => {
+          original.headers = original.headers || {}
           original.headers.Authorization = `Bearer ${token}`
           return api(original)
         })
@@ -62,20 +66,27 @@ api.interceptors.response.use(
       const refresh = localStorage.getItem('refresh_token')
       if (!refresh) throw new Error('No refresh token')
 
-      const { data } = await axios.post('/api/v1/auth/token/refresh/', { refresh })
+      // ✅ use SAME api instance (important fix)
+      const { data } = await api.post('/auth/token/refresh/', { refresh })
+
       const newToken = data.access
 
       localStorage.setItem('access_token', newToken)
+
       api.defaults.headers.common.Authorization = `Bearer ${newToken}`
+      original.headers = original.headers || {}
       original.headers.Authorization = `Bearer ${newToken}`
 
       processQueue(null, newToken)
       return api(original)
     } catch (err) {
       processQueue(err, null)
+
       localStorage.removeItem('access_token')
       localStorage.removeItem('refresh_token')
+
       window.location.href = '/login'
+
       return Promise.reject(err)
     } finally {
       isRefreshing = false

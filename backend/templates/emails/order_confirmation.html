@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <h2 style="color: #FF6B2B;">Order Confirmed! 🎉</h2>
+  <p>Hi {{ order.user.first_name }},</p>
+  <p>Your order <strong>{{ order.order_number }}</strong> has been confirmed.</p>
+ 
+  <table width="100%" cellpadding="8" style="border-collapse: collapse;">
+    <thead>
+      <tr style="background: #f8f9fa;">
+        <th align="left">Product</th>
+        <th align="right">Qty</th>
+        <th align="right">Price</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in order.items.all %}
+      <tr style="border-bottom: 1px solid #eee;">
+        <td>{{ item.product_name }}</td>
+        <td align="right">{{ item.quantity }}</td>
+        <td align="right">KSh {{ item.unit_price }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr><td colspan="2">Subtotal</td><td align="right">KSh {{ order.subtotal }}</td></tr>
+      <tr><td colspan="2">Shipping</td><td align="right">KSh {{ order.shipping_cost }}</td></tr>
+      <tr style="font-weight: bold;">
+        <td colspan="2">Total</td>
+        <td align="right">KSh {{ order.total }}</td>
+      </tr>
+    </tfoot>
+  </table>
+ 
+  <p style="color: #666; margin-top: 24px;">Thank you for shopping at <strong>Nixxon Technologies</strong>!</p>
+</body>
+</html>
+ 

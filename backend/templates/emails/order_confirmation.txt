@@ -1,0 +1,17 @@
+Hi {{ order.user.first_name }},
+ 
+Your order {{ order.order_number }} has been confirmed!
+ 
+Items:
+{% for item in order.items.all %}
+- {{ item.product_name }} x{{ item.quantity }} @ KSh {{ item.unit_price }}
+{% endfor %}
+ 
+Subtotal:  KSh {{ order.subtotal }}
+Shipping:  KSh {{ order.shipping_cost }}
+Total:     KSh {{ order.total }}
+ 
+We'll notify you when your order ships.
+ 
+Thank you for shopping at Nixxon Technologies!
+ 

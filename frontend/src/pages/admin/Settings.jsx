@@ -171,7 +171,7 @@ export default function AdminSettings() {
                 <div className="relative">
                   <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
                   <input value={data.store_email || ''} onChange={e => set('store_email', e.target.value)}
-                    placeholder="info@techzone.co.ke" className="input w-full text-sm pl-9" />
+                    placeholder="info@nixxon technologies.co.ke" className="input w-full text-sm pl-9" />
                 </div>
               </Field>
               <Field label="Phone">

@@ -1,6 +1,7 @@
 import csv
 import io
 
+from django.core.cache import cache
 from django.http import HttpResponse
 from rest_framework import generics, permissions, filters, status
 from rest_framework.views import APIView
@@ -13,6 +14,11 @@ from .serializers import (
     CategorySerializer, BrandSerializer, AdminBrandSerializer,
     ProductListSerializer, ProductDetailSerializer,
     AdminProductWriteSerializer,
+)
+from apps.core.cache_utils import (
+    CATEGORIES_KEY, BRANDS_KEY, FEATURED_KEY,
+    CATEGORIES_TTL, BRANDS_TTL, FEATURED_TTL,
+    invalidate_product_cache, invalidate_categories, invalidate_brands,
 )
 
 
@@ -50,10 +56,20 @@ class ProductFilter(django_filters.FilterSet):
 
 
 class CategoryListView(generics.ListAPIView):
-    """Return top-level categories with nested children."""
+    """Return top-level categories with nested children — cached 1 hour."""
     serializer_class = CategorySerializer
     permission_classes = (permissions.AllowAny,)
-    queryset = Category.objects.filter(is_active=True, level=0).prefetch_related("children")
+
+    def get_queryset(self):
+        return Category.objects.filter(is_active=True, level=0).prefetch_related("children")
+
+    def list(self, request, *args, **kwargs):
+        cached = cache.get(CATEGORIES_KEY)
+        if cached is not None:
+            return Response(cached)
+        response = super().list(request, *args, **kwargs)
+        cache.set(CATEGORIES_KEY, response.data, CATEGORIES_TTL)
+        return response
 
 
 class CategoryDetailView(generics.RetrieveAPIView):
@@ -64,9 +80,20 @@ class CategoryDetailView(generics.RetrieveAPIView):
 
 
 class BrandListView(generics.ListAPIView):
+    """Brand list — cached 1 hour."""
     serializer_class = BrandSerializer
     permission_classes = (permissions.AllowAny,)
-    queryset = Brand.objects.filter(is_active=True)
+
+    def get_queryset(self):
+        return Brand.objects.filter(is_active=True)
+
+    def list(self, request, *args, **kwargs):
+        cached = cache.get(BRANDS_KEY)
+        if cached is not None:
+            return Response(cached)
+        response = super().list(request, *args, **kwargs)
+        cache.set(BRANDS_KEY, response.data, BRANDS_TTL)
+        return response
 
 
 class ProductListView(generics.ListAPIView):
@@ -102,6 +129,7 @@ class ProductDetailView(generics.RetrieveAPIView):
 
 
 class FeaturedProductsView(generics.ListAPIView):
+    """Featured products — cached 10 min."""
     serializer_class = ProductListSerializer
     permission_classes = (permissions.AllowAny,)
 
@@ -113,6 +141,14 @@ class FeaturedProductsView(generics.ListAPIView):
             .prefetch_related("images")[:12]
         )
 
+    def list(self, request, *args, **kwargs):
+        cached = cache.get(FEATURED_KEY)
+        if cached is not None:
+            return Response(cached)
+        response = super().list(request, *args, **kwargs)
+        cache.set(FEATURED_KEY, response.data, FEATURED_TTL)
+        return response
+
 
 # ── Admin views ──────────────────────────────────────────────
 
@@ -122,7 +158,6 @@ class IsAdminUser(permissions.BasePermission):
 
 
 class AdminProductListCreateView(generics.ListCreateAPIView):
-    """Admin: list all products (including inactive) and create new ones."""
     permission_classes = (permissions.IsAuthenticated, IsAdminUser)
     parser_classes = (MultiPartParser, FormParser, JSONParser)
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -143,9 +178,12 @@ class AdminProductListCreateView(generics.ListCreateAPIView):
             .prefetch_related("images", "variants")
         )
 
+    def perform_create(self, serializer):
+        serializer.save()
+        invalidate_product_cache()
+
 
 class AdminProductUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
-    """Admin: update or delete a product."""
     permission_classes = (permissions.IsAuthenticated, IsAdminUser)
     parser_classes = (MultiPartParser, FormParser, JSONParser)
     lookup_field = "slug"
@@ -162,28 +200,43 @@ class AdminProductUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
             .prefetch_related("images", "specs", "tags", "variants__attributes")
         )
 
+    def perform_update(self, serializer):
+        serializer.save()
+        invalidate_product_cache()
+
+    def perform_destroy(self, instance):
+        instance.delete()
+        invalidate_product_cache()
+
 
 class AdminCategoryListCreateView(generics.ListCreateAPIView):
-    """Admin: list all categories and create new ones."""
     serializer_class = CategorySerializer
     permission_classes = (permissions.IsAuthenticated, IsAdminUser)
 
     def get_queryset(self):
         return Category.objects.filter(level=0).prefetch_related("children")
 
+    def perform_create(self, serializer):
+        serializer.save()
+        invalidate_categories()
+
 
 class AdminCategoryUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
-    """Admin: update or delete a category."""
     serializer_class = CategorySerializer
     permission_classes = (permissions.IsAuthenticated, IsAdminUser)
     lookup_field = "slug"
     queryset = Category.objects.all()
 
+    def perform_update(self, serializer):
+        serializer.save()
+        invalidate_categories()
 
-# ── Brand Admin ──────────────────────────────────────────────
+    def perform_destroy(self, instance):
+        instance.delete()
+        invalidate_categories()
+
 
 class AdminBrandListCreateView(generics.ListCreateAPIView):
-    """Admin: list all brands and create new ones."""
     serializer_class = AdminBrandSerializer
     permission_classes = (permissions.IsAuthenticated, IsAdminUser)
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -191,19 +244,27 @@ class AdminBrandListCreateView(generics.ListCreateAPIView):
     ordering = ["name"]
     queryset = Brand.objects.all()
 
+    def perform_create(self, serializer):
+        serializer.save()
+        invalidate_brands()
+
 
 class AdminBrandUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
-    """Admin: update or delete a brand."""
     serializer_class = AdminBrandSerializer
     permission_classes = (permissions.IsAuthenticated, IsAdminUser)
     lookup_field = "slug"
     queryset = Brand.objects.all()
 
+    def perform_update(self, serializer):
+        serializer.save()
+        invalidate_brands()
 
-# ── Bulk Actions ─────────────────────────────────────────────
+    def perform_destroy(self, instance):
+        instance.delete()
+        invalidate_brands()
+
 
 class AdminProductBulkActionView(APIView):
-    """Admin: perform bulk actions on products."""
     permission_classes = (permissions.IsAuthenticated, IsAdminUser)
 
     def post(self, request):
@@ -218,35 +279,28 @@ class AdminProductBulkActionView(APIView):
 
         if action == "publish":
             products.update(is_active=True)
-            return Response({"detail": f"{count} products published."})
         elif action == "unpublish":
             products.update(is_active=False)
-            return Response({"detail": f"{count} products unpublished."})
         elif action == "delete":
             products.delete()
-            return Response({"detail": f"{count} products deleted."})
         elif action == "feature":
             products.update(is_featured=True)
-            return Response({"detail": f"{count} products featured."})
         elif action == "unfeature":
             products.update(is_featured=False)
-            return Response({"detail": f"{count} products unfeatured."})
         else:
             return Response({"detail": "Unknown action."}, status=status.HTTP_400_BAD_REQUEST)
 
+        invalidate_product_cache()
+        return Response({"detail": f"{count} products updated."})
 
-# ── CSV Export / Import ──────────────────────────────────────
 
 class AdminProductExportCSV(APIView):
-    """Export all products to CSV."""
     permission_classes = (permissions.IsAuthenticated, IsAdminUser)
 
     def get(self, request):
         products = Product.objects.select_related("category", "brand").all()
-
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="products.csv"'
-
         writer = csv.writer(response)
         writer.writerow([
             "ID", "Name", "SKU", "Category", "Brand",
@@ -264,12 +318,10 @@ class AdminProductExportCSV(APIView):
                 p.is_active, p.is_featured,
                 p.short_description, p.meta_title, p.meta_description,
             ])
-
         return response
 
 
 class AdminProductImportCSV(APIView):
-    """Import products from CSV."""
     permission_classes = (permissions.IsAuthenticated, IsAdminUser)
     parser_classes = (MultiPartParser,)
 
@@ -280,14 +332,12 @@ class AdminProductImportCSV(APIView):
 
         decoded = csv_file.read().decode("utf-8")
         reader = csv.DictReader(io.StringIO(decoded))
-
         created = 0
         updated = 0
         errors = []
 
         for row_num, row in enumerate(reader, start=2):
             try:
-                # Look up category and brand
                 category = None
                 brand = None
                 if row.get("Category"):
@@ -315,9 +365,7 @@ class AdminProductImportCSV(APIView):
                     errors.append(f"Row {row_num}: Missing SKU or Name")
                     continue
 
-                _, was_created = Product.objects.update_or_create(
-                    sku=sku, defaults=defaults,
-                )
+                _, was_created = Product.objects.update_or_create(sku=sku, defaults=defaults)
                 if was_created:
                     created += 1
                 else:
@@ -325,16 +373,14 @@ class AdminProductImportCSV(APIView):
             except Exception as e:
                 errors.append(f"Row {row_num}: {str(e)}")
 
-        return Response({
-            "created": created,
-            "updated": updated,
-            "errors": errors,
-        })
+        invalidate_product_cache()
+        return Response({"created": created, "updated": updated, "errors": errors})
 
-
-# ── Admin Image Delete ───────────────────────────────────────
 
 class AdminProductImageDeleteView(generics.DestroyAPIView):
-    """Admin: delete a product image."""
     permission_classes = (permissions.IsAuthenticated, IsAdminUser)
     queryset = ProductImage.objects.all()
+
+    def perform_destroy(self, instance):
+        instance.delete()
+        invalidate_product_cache()

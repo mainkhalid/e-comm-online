@@ -97,8 +97,8 @@ export default function Home() {
   getTopRatedProducts(),
 ]).then(([featRes, newRes, saleRes, topRes]) => {
       if (featRes.status === 'fulfilled') setFeatured(featRes.value.data.results || featRes.value.data)
-      if (newRes.status === 'fulfilled') setNewArrivals((newRes.value.data.results || newRes.value.data))
-      if (saleRes.status === 'fulfilled') setOnSale((saleRes.value.data.results || saleRes.value.data))
+      if (newRes.status === 'fulfilled') setLaptops(newRes.value.data.results || newRes.value.data)
+      if (saleRes.status === 'fulfilled') setDesktops(saleRes.value.data.results || saleRes.value.data)
       if (topRes.status === 'fulfilled') setTopRated((topRes.value.data.results || topRes.value.data))
     }).finally(() => setLoading(false))
   }, [])

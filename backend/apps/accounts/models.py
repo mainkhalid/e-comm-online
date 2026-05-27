@@ -70,16 +70,16 @@ class StoreSettings(models.Model):
     """
 
     # ── General ──────────────────────────────────────────────
-    store_name = models.CharField(max_length=200, default="TechZone")
+    store_name = models.CharField(max_length=200, default="Nixxon Technologies")
     store_tagline = models.CharField(max_length=300, blank=True, default="Computers, Laptops & Accessories")
-    store_email = models.EmailField(blank=True, default="info@techzone.co.ke")
+    store_email = models.EmailField(blank=True, default="info@nixxon technologies.co.ke")
     store_phone = models.CharField(max_length=20, blank=True, default="+254 700 000 000")
     address_line = models.CharField(max_length=300, blank=True)
     city = models.CharField(max_length=100, blank=True, default="Nairobi")
     country = models.CharField(max_length=100, blank=True, default="Kenya")
     currency_code = models.CharField(max_length=5, default="KES")
     currency_symbol = models.CharField(max_length=5, default="KSh")
-    logo = models.ImageField(upload_to="techzone/settings/", blank=True, null=True)
+    logo = models.ImageField(upload_to="Nixxon/settings/", blank=True, null=True)
     facebook_url = models.URLField(blank=True)
     twitter_url = models.URLField(blank=True)
     instagram_url = models.URLField(blank=True)

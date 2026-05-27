@@ -5,17 +5,26 @@ Supports STK Push (Lipa Na M-Pesa Online) for checkout.
 import base64
 import requests
 from datetime import datetime
+from django.core.cache import cache
+
+
+# Cache StoreSettings for 5 minutes to avoid DB hit on every M-Pesa call
+_CFG_CACHE_KEY = "techzone:mpesa_config"
+_CFG_CACHE_TTL = 60 * 5  # 5 minutes
 
 
 def _cfg() -> dict:
     """
-    Load M-Pesa config from the StoreSettings singleton.
-    Imported here (not at module level) to avoid circular imports
-    and to always reflect the latest saved settings.
+    Load M-Pesa config from cache or DB.
+    Invalidate by calling: cache.delete('techzone:mpesa_config')
     """
+    cfg = cache.get(_CFG_CACHE_KEY)
+    if cfg:
+        return cfg
+
     from apps.accounts.models import StoreSettings
     s = StoreSettings.load()
-    return {
+    cfg = {
         "env":       s.mpesa_environment,
         "key":       s.mpesa_consumer_key,
         "secret":    s.mpesa_consumer_secret,
@@ -23,10 +32,25 @@ def _cfg() -> dict:
         "passkey":   s.mpesa_passkey,
         "callback":  s.mpesa_callback_url,
     }
+    cache.set(_CFG_CACHE_KEY, cfg, _CFG_CACHE_TTL)
+    return cfg
+
+
+def invalidate_mpesa_config():
+    """Call this after saving StoreSettings to clear the cache."""
+    cache.delete(_CFG_CACHE_KEY)
 
 
 def get_mpesa_access_token() -> str:
-    """Get OAuth access token from Safaricom."""
+    """
+    Get OAuth access token from Safaricom.
+    Cached for 55 minutes (token valid for 60 min).
+    """
+    cache_key = "techzone:mpesa_access_token"
+    token = cache.get(cache_key)
+    if token:
+        return token
+
     cfg = _cfg()
     url = (
         "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
@@ -43,7 +67,11 @@ def get_mpesa_access_token() -> str:
         timeout=30,
     )
     response.raise_for_status()
-    return response.json().get("access_token")
+    token = response.json().get("access_token")
+
+    # Cache for 55 min — Safaricom tokens expire in 60 min
+    cache.set(cache_key, token, 60 * 55)
+    return token
 
 
 def generate_password() -> tuple[str, str]:

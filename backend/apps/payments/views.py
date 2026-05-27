@@ -9,17 +9,12 @@ from .mpesa import stk_push, query_stk_push
 
 
 def format_phone(phone: str) -> str:
-    """
-    Normalize phone number to 254XXXXXXXXX format.
-    Raises ValueError for invalid Kenyan numbers.
-    """
+    """Normalize phone number to 254XXXXXXXXX format."""
     phone = re.sub(r"\D", "", phone)
     if phone.startswith("0"):
         phone = "254" + phone[1:]
     elif phone.startswith("+"):
         phone = phone[1:]
-
-    # Must be a valid Safaricom (07xx) or Airtel/Faiba (01xx) Kenya number
     if not re.match(r"^2547\d{8}$|^2541\d{8}$", phone):
         raise ValueError(
             f"'{phone}' is not a valid Kenyan mobile number. "
@@ -49,27 +44,27 @@ class InitiateMpesaPaymentView(APIView):
         if order.payment_status == "paid":
             return Response({"error": "Order is already paid."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Validate and format phone number
         try:
             formatted_phone = format_phone(phone)
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Safely cast order total to int
         try:
             amount = int(order.total)
         except (TypeError, ValueError):
             return Response(
-                {"error": "Order total is invalid. Please contact support."},
+                {"error": "Invalid order total. Please contact support."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         try:
             result = stk_push(formatted_phone, amount, order.order_number)
         except Exception as e:
-            return Response({"error": f"M-Pesa request failed: {str(e)}"}, status=status.HTTP_502_BAD_GATEWAY)
+            return Response(
+                {"error": f"M-Pesa request failed: {str(e)}"},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
 
-        # Save or update payment record
         Payment.objects.update_or_create(
             order=order,
             defaults={
@@ -92,7 +87,6 @@ class MpesaCallbackView(APIView):
     permission_classes = (AllowAny,)
 
     def post(self, request):
-        # Validate basic payload structure before doing anything
         body = request.data.get("Body")
         if not body or "stkCallback" not in body:
             return Response({"ResultCode": 0, "ResultDesc": "Success"})
@@ -114,15 +108,19 @@ class MpesaCallbackView(APIView):
         payment.result_description = result_desc
 
         if result_code == "0":
-            # Extract M-Pesa receipt number from callback metadata
             items = data.get("CallbackMetadata", {}).get("Item", [])
             for item in items:
                 if item.get("Name") == "MpesaReceiptNumber":
                     payment.mpesa_receipt_number = item.get("Value", "")
+
             payment.status = "completed"
             payment.order.payment_status = "paid"
             payment.order.status = "confirmed"
             payment.order.save()
+
+            # Send payment receipt email asynchronously
+            from apps.orders.tasks import send_payment_receipt_email
+            send_payment_receipt_email.delay(payment.id)
         else:
             payment.status = "failed"
 
@@ -142,7 +140,7 @@ class CheckPaymentStatusView(APIView):
 
         return Response({
             "order_number": order.order_number,
-            "payment_status": order.payment_status,   # "unpaid" | "paid" | "failed"
+            "payment_status": order.payment_status,
             "mpesa_receipt": payment.mpesa_receipt_number,
-            "status": payment.status,                  # "pending" | "completed" | "failed"
+            "status": payment.status,
         })

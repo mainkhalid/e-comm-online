@@ -17,11 +17,10 @@ export const getTopRatedProducts = (limit = 12) =>
 export const getProductsByCategory = (category, limit = 12) =>
   api.get('/products/', {
     params: {
-      category,
+      category__slug: category,   // ← matches what Products.jsx uses
       page_size: limit,
     },
   })
-
 // ── Auth ─────────────────────────────────────────────────────
 export const register = (data) => api.post('/auth/register/', data)
 export const login = (data) => api.post('/auth/login/', data)
