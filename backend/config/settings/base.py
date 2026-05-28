@@ -1,6 +1,7 @@
 """
 Base settings for TechZone e-commerce backend.
 """
+import ssl
 import environ
 from pathlib import Path
 
@@ -22,16 +23,16 @@ DJANGO_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "cloudinary_storage",
-    "django.contrib.staticfiles",  
+    "django.contrib.staticfiles",
     "django.contrib.sitemaps",
-    "cloudinary", 
+    "cloudinary",
 ]
 
 THIRD_PARTY_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
-     "rest_framework_simplejwt.token_blacklist", 
     "django_filters",
     "mptt",
     "drf_spectacular",
@@ -45,7 +46,6 @@ LOCAL_APPS = [
     "apps.reviews",
     "apps.seo",
 ]
-
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -102,30 +102,28 @@ TIME_ZONE = "Africa/Nairobi"
 USE_I18N = True
 USE_TZ = True
 
-# Static & Media files
-STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
+# Static files — whitenoise compression only in production
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+# Cloudinary
 CLOUDINARY_STORAGE = {
     "CLOUD_NAME": env("CLOUDINARY_CLOUD_NAME"),
     "API_KEY":    env("CLOUDINARY_API_KEY"),
     "API_SECRET": env("CLOUDINARY_API_SECRET"),
 }
-
-DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage" 
-
+DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 CLOUDINARY_URL = f"cloudinary://{env('CLOUDINARY_API_KEY')}:{env('CLOUDINARY_API_SECRET')}@{env('CLOUDINARY_CLOUD_NAME')}"
 
-
-# Email
+# Email — overridden per environment
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = env("EMAIL_HOST", default="smtp.gmail.com")
 EMAIL_PORT = env.int("EMAIL_PORT", default=587)
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="TechZone <noreply@techzone.co.ke>")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="TechZone <noreply@nixxontechnologies.co.ke>")
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Django REST Framework
@@ -146,7 +144,7 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
-# JWT settings
+# JWT
 from datetime import timedelta
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
@@ -159,23 +157,32 @@ SIMPLE_JWT = {
 # CORS
 CORS_ALLOWED_ORIGINS = env.list(
     "CORS_ALLOWED_ORIGINS",
-    default=["http://localhost:5173", "http://127.0.0.1:5173","https://nixxon-technologies-ltd.pages.dev"]
+    default=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://nixxon-technologies-ltd.pages.dev",
+    ]
 )
 CORS_ALLOW_CREDENTIALS = True
 
 # Redis & Celery
-REDIS_URL = env("REDIS_URL", default="redis://localhost:6379/0")
+REDIS_URL = env("REDIS_URL", default="redis://127.0.0.1:6379/0")
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
+# Redis cache — SSL support for Upstash (rediss://) or local (redis://)
+_cache_options = {"CLIENT_CLASS": "django_redis.client.DefaultClient"}
+if REDIS_URL.startswith("rediss://"):
+    _cache_options["CONNECTION_POOL_KWARGS"] = {"ssl_cert_reqs": ssl.CERT_NONE}
+
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": REDIS_URL,
-        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+        "OPTIONS": _cache_options,
         "TIMEOUT": 300,
     }
 }
@@ -186,7 +193,7 @@ MPESA_CONSUMER_SECRET = env("MPESA_CONSUMER_SECRET", default="")
 MPESA_SHORTCODE = env("MPESA_SHORTCODE", default="")
 MPESA_PASSKEY = env("MPESA_PASSKEY", default="")
 MPESA_CALLBACK_URL = env("MPESA_CALLBACK_URL", default="")
-MPESA_ENVIRONMENT = env("MPESA_ENVIRONMENT", default="sandbox")  # sandbox | production
+MPESA_ENVIRONMENT = env("MPESA_ENVIRONMENT", default="sandbox")
 
 # API Docs
 SPECTACULAR_SETTINGS = {
@@ -195,6 +202,6 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
 }
 
-# Site info (for SEO / sitemaps)
+# Site info
 SITE_URL = env("SITE_URL", default="http://localhost:5173")
 SITE_NAME = "TechZone"
