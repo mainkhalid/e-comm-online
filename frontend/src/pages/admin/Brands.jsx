@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react'
-import { Plus, Edit2, Trash2, Award, Search, X, Check } from 'lucide-react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { useDispatch } from 'react-redux'
+import { Plus, Edit2, Trash2, Award, Search, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import {
   adminGetBrands, adminCreateBrand,
   adminUpdateBrand, adminDeleteBrand,
 } from '../../api/services'
+import { invalidateProducts } from '../../store/slices/productsSlice'
 
 const EMPTY = { name: '', slug: '', description: '', is_active: true }
 
@@ -24,8 +26,8 @@ function BrandModal({ brand, onClose, onSaved }) {
   const handleSubmit = async (e) => {
     e.preventDefault(); setSaving(true)
     try {
-      if (brand) { await adminUpdateBrand(brand.slug, form) }
-      else       { await adminCreateBrand(form) }
+      if (brand) await adminUpdateBrand(brand.slug, form)
+      else       await adminCreateBrand(form)
       toast.success(brand ? 'Brand updated!' : 'Brand created!')
       onSaved(); onClose()
     } catch (err) {
@@ -87,10 +89,11 @@ function BrandModal({ brand, onClose, onSaved }) {
 }
 
 export default function AdminBrands() {
-  const [brands, setBrands]     = useState([])
-  const [loading, setLoading]   = useState(true)
-  const [search, setSearch]     = useState('')
-  const [modal, setModal]       = useState(null)
+  const dispatch = useDispatch()
+  const [brands, setBrands]   = useState([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch]   = useState('')
+  const [modal, setModal]     = useState(null)
 
   const load = () => {
     setLoading(true)
@@ -102,15 +105,40 @@ export default function AdminBrands() {
 
   useEffect(() => { load() }, [])
 
+  // ── Debounced search (300ms delay) ───────────────────────
+  const searchTimerRef = useRef(null)
+  const debouncedSearch = useCallback(() => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current)
+    searchTimerRef.current = setTimeout(() => { load() }, 300)
+  }, [search])
+  useEffect(() => { return () => clearTimeout(searchTimerRef.current) }, [])
+
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value)
+    debouncedSearch()
+  }
+
   const handleSearch = (e) => { e.preventDefault(); load() }
 
   const handleDelete = async (slug, name) => {
     if (!confirm(`Delete brand "${name}"? Products will lose this brand assignment.`)) return
+    // Optimistic update: remove from UI immediately
+    const previousBrands = brands
+    setBrands(prev => prev.filter(b => b.slug !== slug))
     try {
       await adminDeleteBrand(slug)
       toast.success('Brand deleted')
-      load()
-    } catch { toast.error('Could not delete brand') }
+      dispatch(invalidateProducts())
+    } catch {
+      // Revert on error
+      setBrands(previousBrands)
+      toast.error('Could not delete brand')
+    }
+  }
+
+  const handleSaved = () => {
+    dispatch(invalidateProducts()) // clear Redux brand cache
+    load()
   }
 
   return (
@@ -125,16 +153,14 @@ export default function AdminBrands() {
         </button>
       </div>
 
-      {/* Search */}
       <div className="rounded-xl p-4" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
         <form onSubmit={handleSearch} className="relative max-w-sm">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
-          <input value={search} onChange={e => setSearch(e.target.value)}
+          <input value={search} onChange={handleSearchChange}
             placeholder="Search brands…" className="input pl-9 w-full text-sm" />
         </form>
       </div>
 
-      {/* Table */}
       <div className="card overflow-hidden" style={{ transform: 'none' }}>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -181,9 +207,7 @@ export default function AdminBrands() {
                     </div>
                   </td>
                   <td className="px-4 py-3.5 text-xs font-mono" style={{ color: 'var(--text-muted)' }}>{b.slug}</td>
-                  <td className="px-4 py-3.5 text-xs" style={{ color: 'var(--text-muted)' }}>
-                    {b.product_count ?? '—'}
-                  </td>
+                  <td className="px-4 py-3.5 text-xs" style={{ color: 'var(--text-muted)' }}>{b.product_count ?? '—'}</td>
                   <td className="px-4 py-3.5">
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
                       style={{
@@ -216,7 +240,7 @@ export default function AdminBrands() {
         <BrandModal
           brand={modal === 'new' ? null : modal}
           onClose={() => setModal(null)}
-          onSaved={load}
+          onSaved={handleSaved}
         />
       )}
     </div>

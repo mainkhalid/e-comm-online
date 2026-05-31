@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useDispatch, useSelector } from 'react-redux'
 import { Helmet } from 'react-helmet-async'
 import { LayoutGrid, List, SlidersHorizontal, X, ChevronDown } from 'lucide-react'
-import { getProducts, getCategories, getBrands } from '../api/services'
+import { getProducts } from '../api/services'
+import { fetchCategories, fetchBrands } from '../store/slices/productsSlice'
 import ProductCard from '../components/product/ProductCard'
 import FilterSidebar from '../components/filters/FilterSidebar'
 import QuickViewModal from '../components/product/QuickViewModal'
@@ -53,19 +55,27 @@ function ActiveChips({ chips, onRemove }) {
 
 export default function Products() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const dispatch = useDispatch()
+
+  // Categories and brands from Redux — cached, no refetch on navigation
+  const { categories, brands } = useSelector(s => s.products)
 
   const [products, setProducts]   = useState([])
-  const [categories, setCategories] = useState([])
-  const [brands, setBrands]       = useState([])
   const [loading, setLoading]     = useState(true)
   const [count, setCount]         = useState(0)
   const [page, setPage]           = useState(1)
   const [hasMore, setHasMore]     = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
 
-  const [viewMode, setViewMode]         = useState('grid') // 'grid' | 'list'
+  const [viewMode, setViewMode]         = useState('grid')
   const [mobileFilters, setMobileFilters] = useState(false)
   const [quickViewProduct, setQuickViewProduct] = useState(null)
+
+  /* Fetch categories + brands from Redux (cached) */
+  useEffect(() => {
+    dispatch(fetchCategories())
+    dispatch(fetchBrands())
+  }, [dispatch])
 
   /* URL params */
   const search      = searchParams.get('search')    || ''
@@ -137,12 +147,6 @@ export default function Products() {
       .catch(() => {})
       .finally(() => { setLoading(false); setLoadingMore(false) })
   }, [searchParams, page])
-
-  /* Fetch categories + brands once */
-  useEffect(() => {
-    getCategories().then(({ data }) => setCategories(data.results || data)).catch(() => {})
-    getBrands().then(({ data }) => setBrands(data.results || data)).catch(() => {})
-  }, [])
 
   /* Page title */
   const pageTitle = search

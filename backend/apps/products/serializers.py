@@ -5,6 +5,20 @@ from .models import (
 )
 
 
+class DynamicFieldsMixin:
+    """Allow clients to request only specific fields via ?fields=name,price,image."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        request = self.context.get('request')
+        if request:
+            fields_param = request.query_params.get('fields')
+            if fields_param:
+                allowed = set(fields_param.split(','))
+                existing = set(self.fields.keys())
+                for field_name in existing - allowed:
+                    self.fields.pop(field_name)
+
+
 class CategorySerializer(serializers.ModelSerializer):
     children = serializers.SerializerMethodField()
 
@@ -32,7 +46,10 @@ class AdminBrandSerializer(serializers.ModelSerializer):
         fields = ("id", "name", "slug", "logo", "description", "is_active", "product_count")
 
     def get_product_count(self, obj):
-        return obj.products.count()
+        # Use annotated value from queryset if available, else fallback
+        if hasattr(obj, 'product_count'):
+            return obj.product_count
+        return obj.products.filter(is_active=True).count()
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
@@ -72,7 +89,7 @@ class ProductVariantSerializer(serializers.ModelSerializer):
         )
 
 
-class ProductListSerializer(serializers.ModelSerializer):
+class ProductListSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     """Lightweight serializer for product listings / search results."""
     primary_image = serializers.SerializerMethodField()
     category_name = serializers.CharField(source="category.name", read_only=True)
@@ -110,7 +127,7 @@ class ProductListSerializer(serializers.ModelSerializer):
         return obj.variants.count()
 
 
-class ProductDetailSerializer(serializers.ModelSerializer):
+class ProductDetailSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     """Full serializer for the product detail page."""
     images = ProductImageSerializer(many=True, read_only=True)
     specs = ProductSpecSerializer(many=True, read_only=True)

@@ -86,6 +86,11 @@ class Product(models.Model):
             models.Index(fields=["slug"]),
             models.Index(fields=["sku"]),
             models.Index(fields=["is_active", "is_featured"]),
+            models.Index(fields=["brand", "is_active"]),
+            models.Index(fields=["category", "is_active"]),
+            models.Index(fields=["-created_at"]),
+            models.Index(fields=["price"]),
+            models.Index(fields=["is_featured", "-created_at"]),
         ]
 
     def __str__(self):
@@ -111,14 +116,19 @@ class Product(models.Model):
 
     @property
     def average_rating(self):
-        reviews = self.reviews.filter(is_approved=True)
-        if reviews.exists():
-            return round(sum(r.rating for r in reviews) / reviews.count(), 1)
-        return 0
+        from django.db.models import Avg
+        result = self.reviews.filter(
+            is_approved=True
+        ).aggregate(avg=Avg('rating'))
+        return round(result['avg'] or 0, 1)
 
     @property
     def review_count(self):
-        return self.reviews.filter(is_approved=True).count()
+        from django.db.models import Count
+        result = self.reviews.filter(
+            is_approved=True
+        ).aggregate(cnt=Count('id'))
+        return result['cnt']
 
     def save(self, *args, **kwargs):
         if not self.slug:

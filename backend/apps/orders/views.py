@@ -17,7 +17,12 @@ class CartView(APIView):
 
     def get_cart(self, user):
         cart, _ = Cart.objects.get_or_create(user=user)
-        return cart
+        # Prefetch all related data in one query to eliminate N+1
+        return Cart.objects.filter(pk=cart.pk).prefetch_related(
+            'items__product__images',
+            'items__product__brand',
+            'items__product__category',
+        ).first()
 
     def get(self, request):
         cart = self.get_cart(request.user)
@@ -59,14 +64,18 @@ class OrderListCreateView(generics.ListCreateAPIView):
         return Order.objects.filter(user=self.request.user).prefetch_related("items")
 
     def perform_create(self, serializer):
-        cart = Cart.objects.filter(user=self.request.user).first()
+        # Prefetch product data to avoid N+1 during order item creation
+        cart = Cart.objects.filter(user=self.request.user).prefetch_related(
+            'items__product__images', 'items__product__brand'
+        ).first()
         if not cart or not cart.items.exists():
             from rest_framework.exceptions import ValidationError
             raise ValidationError("Cart is empty.")
         subtotal = cart.total
         order = serializer.save(user=self.request.user, subtotal=subtotal, total=subtotal)
-        for item in cart.items.all():
-            OrderItem.objects.create(
+        # Build order items in bulk instead of individual creates
+        order_items = [
+            OrderItem(
                 order=order,
                 product=item.product,
                 product_name=item.product.name,
@@ -74,6 +83,9 @@ class OrderListCreateView(generics.ListCreateAPIView):
                 quantity=item.quantity,
                 unit_price=item.product.current_price,
             )
+            for item in cart.items.all()
+        ]
+        OrderItem.objects.bulk_create(order_items)
         cart.items.all().delete()
 
 

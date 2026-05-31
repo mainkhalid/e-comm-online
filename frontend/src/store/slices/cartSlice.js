@@ -21,16 +21,56 @@ const reject = (state, action) => {
 
 const cartSlice = createSlice({
   name: 'cart',
-  initialState: { items: [], total: 0, itemCount: 0, loading: false, error: null },
+  initialState: { items: [], total: 0, itemCount: 0, loading: false, error: null, _snapshot: null },
   reducers: {},
   extraReducers: (b) => {
     b.addCase(fetchCart.pending,     (s) => { s.loading = true; s.error = null })
      .addCase(fetchCart.fulfilled,   set)
      .addCase(fetchCart.rejected,    reject)
-     .addCase(addItem.fulfilled,     set)
-     .addCase(addItem.rejected,      reject)
-     .addCase(removeItem.fulfilled,  set)
-     .addCase(removeItem.rejected,   reject)
+
+     // ── Optimistic add: increment count immediately ──
+     .addCase(addItem.pending, (s, a) => {
+       s._snapshot = { items: [...s.items], total: s.total, itemCount: s.itemCount }
+       s.itemCount += a.meta.arg.quantity || 1
+       s.loading = false
+       s.error = null
+     })
+     .addCase(addItem.fulfilled, set)
+     .addCase(addItem.rejected, (s, a) => {
+       // Revert on error
+       if (s._snapshot) {
+         s.items = s._snapshot.items
+         s.total = s._snapshot.total
+         s.itemCount = s._snapshot.itemCount
+         s._snapshot = null
+       }
+       reject(s, a)
+     })
+
+     // ── Optimistic remove: filter out item immediately ──
+     .addCase(removeItem.pending, (s, a) => {
+       s._snapshot = { items: [...s.items], total: s.total, itemCount: s.itemCount }
+       const itemId = a.meta.arg
+       const item = s.items.find(i => i.id === itemId)
+       if (item) {
+         s.itemCount = Math.max(0, s.itemCount - item.quantity)
+         s.items = s.items.filter(i => i.id !== itemId)
+       }
+       s.loading = false
+       s.error = null
+     })
+     .addCase(removeItem.fulfilled, set)
+     .addCase(removeItem.rejected, (s, a) => {
+       // Revert on error
+       if (s._snapshot) {
+         s.items = s._snapshot.items
+         s.total = s._snapshot.total
+         s.itemCount = s._snapshot.itemCount
+         s._snapshot = null
+       }
+       reject(s, a)
+     })
+
      .addCase(updateItem.fulfilled,  set)
      .addCase(updateItem.rejected,   reject)
   },

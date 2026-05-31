@@ -20,7 +20,7 @@ const BENEFITS = [
   },
   {
     icon: RotateCcw,
-    title: '30-Day Returns',
+    title: '8-Day Returns',
     desc: 'Hassle-free return or exchange policy',
     accent: '#FF6B2B',
     glow: 'rgba(255,107,43,0.15)',

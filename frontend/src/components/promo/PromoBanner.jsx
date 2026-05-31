@@ -1,151 +1,112 @@
 import { useState } from 'react'
 import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { homeAssets } from '../../assets/assets'
 
-export default function PromoBanner({ title, discount, image, description, ctaText = 'Shop Now', href = '/products' }) {
+/* ─── Single banner card ─────────────────────────────── */
+function PromoBanner({ title, discount, image, description, ctaText = 'Shop Now', href = '/products' }) {
   const [hovered, setHovered] = useState(false)
 
   return (
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      style={{
-        borderRadius: 16,
-        overflow: 'hidden',
-        position: 'relative',
-        minHeight: 280,
-        background: '#0A0F1E',
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-      }}
+      className="relative min-h-[300px] rounded-2xl overflow-hidden bg-[#0A0F1E] border border-white/[0.04] grid grid-cols-1 sm:grid-cols-12 group transition-all duration-300 shadow-xl"
     >
-      {/* Left — text content */}
-      <div style={{
-        position: 'relative', zIndex: 2,
-        padding: '44px 40px',
-        display: 'flex', flexDirection: 'column',
-        justifyContent: 'center', gap: 18,
-      }}>
-        {/* Eyebrow */}
-        <span style={{
-          fontSize: 10, fontWeight: 800, letterSpacing: '0.14em',
-          textTransform: 'uppercase',
-          color: '#FACC15',
-          display: 'flex', alignItems: 'center', gap: 6,
-        }}>
-          <span style={{
-            display: 'inline-block', width: 20, height: 2,
-            background: '#FACC15', borderRadius: 2,
-          }} />
+      {/* Background Subtle Glow */}
+      <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-amber-500/10 rounded-full blur-[80px] pointer-events-none" />
+
+      {/* Left — Text Content */}
+      <div className="relative z-10 sm:col-span-7 p-8 flex flex-col justify-center gap-4">
+        {/* Badge */}
+        <span className="inline-flex items-center gap-2 text-[11px] font-extrabold tracking-widest text-amber-400 uppercase">
+          <span className="w-5 h-[2px] bg-amber-400 rounded-full" />
           Limited Offer
         </span>
 
         {/* Title */}
-        <h3 style={{
-          fontSize: 30, fontWeight: 900,
-          color: '#fff', lineHeight: 1.12,
-          letterSpacing: '-0.03em', margin: 0,
-        }}>
+        <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
           {title}
         </h3>
 
         {/* Description */}
-        <p style={{
-          fontSize: 13, color: 'rgba(255,255,255,0.5)',
-          lineHeight: 1.6, margin: 0, maxWidth: 280,
-        }}>
+        <p className="text-sm text-slate-400 leading-relaxed max-w-[280px]">
           {description}
         </p>
 
-        {/* Discount pill + CTA */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+        {/* Action / Discount Area */}
+        <div className="flex items-center gap-4 mt-2 flex-wrap">
           {discount && (
-            <div style={{
-              display: 'flex', flexDirection: 'column',
-              alignItems: 'center', justifyContent: 'center',
-              width: 72, height: 72, borderRadius: '50%',
-              background: 'linear-gradient(135deg, #FACC15, #F59E0B)',
-              boxShadow: '0 8px 24px rgba(250,204,21,0.35)',
-              flexShrink: 0,
-            }}>
-              <span style={{ fontSize: 9, fontWeight: 800, color: '#78350F', letterSpacing: '0.06em', textTransform: 'uppercase' }}>UP TO</span>
-              <span style={{ fontSize: 20, fontWeight: 900, color: '#78350F', lineHeight: 1 }}>{discount}</span>
-              <span style={{ fontSize: 8, fontWeight: 800, color: '#78350F', letterSpacing: '0.08em' }}>OFF</span>
+            <div className="relative flex flex-col items-center justify-center w-[76px] h-[76px] rounded-full bg-gradient-to-br from-amber-400 to-amber-500 shadow-[0_8px_24px_rgba(245,158,11,0.25)] shrink-0 animate-pulse">
+              <span className="text-[9px] font-extrabold text-amber-950 tracking-wider">UP TO</span>
+              <span className="text-2xl font-black text-amber-950 leading-none">{discount}</span>
+              <span className="text-[8px] font-bold text-amber-950 tracking-widest">OFF</span>
             </div>
           )}
-
+          
           <Link
             to={href}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              padding: '12px 24px', borderRadius: 10,
-              background: '#FACC15',
-              color: '#78350F',
-              fontSize: 13, fontWeight: 800,
-              textDecoration: 'none',
-              letterSpacing: '0.02em',
-              transition: 'transform 0.2s, box-shadow 0.2s',
-              transform: hovered ? 'translateY(-2px)' : 'none',
-              boxShadow: hovered ? '0 12px 32px rgba(250,204,21,0.4)' : '0 4px 16px rgba(250,204,21,0.2)',
-            }}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-400 text-amber-950 text-sm font-extrabold tracking-wide no-underline transition-all duration-300 hover:bg-amber-300 hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgba(245,158,11,0.4)]"
           >
-            {ctaText} <ArrowRight size={14} />
+            {ctaText} 
+            <ArrowRight size={15} className="transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
         </div>
       </div>
 
-      {/* Right — product image full bleed */}
-      <div style={{ position: 'relative', overflow: 'hidden' }}>
-        {/* Blurred atmospheric bg */}
+      {/* Right — Product Image Showcase */}
+      <div className="relative sm:col-span-5 h-64 sm:h-auto overflow-hidden flex items-center justify-center p-6 bg-gradient-to-l from-black/20 to-transparent">
+        {/* Dynamic Blurred Background Image mirroring the product */}
         <img
           src={image || '/placeholder.png'}
           alt=""
           aria-hidden="true"
-          style={{
-            position: 'absolute', inset: 0,
-            width: '100%', height: '100%',
-            objectFit: 'cover',
-            filter: 'blur(24px) brightness(0.3) saturate(1.5)',
-            transform: 'scale(1.1)',
-          }}
+          className="absolute inset-0 w-full h-full object-cover opacity-30 blur-2xl scale-125 select-none pointer-events-none"
         />
-        {/* Sharp product image */}
-        <div style={{
-          position: 'absolute', inset: 0,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: 24,
-        }}>
-          {/* Glow behind product */}
-          <div style={{
-            position: 'absolute',
-            width: '60%', height: '60%',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(250,204,21,0.25) 0%, transparent 70%)',
-            filter: 'blur(16px)',
-          }} />
-          <img
-            src={image || '/placeholder.png'}
-            alt={title}
-            style={{
-              position: 'relative',
-              maxHeight: 200, maxWidth: '100%',
-              objectFit: 'contain',
-              filter: 'drop-shadow(0 20px 48px rgba(0,0,0,0.6))',
-              transition: 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-              transform: hovered ? 'translateY(-8px) scale(1.03)' : 'translateY(0) scale(1)',
-            }}
-          />
-        </div>
-      </div>
+        
+        {/* Ambient Ring Light Behind Asset */}
+        <div className="absolute w-[70%] h-[70%] bg-amber-500/20 rounded-full blur-2xl opacity-70" />
 
-      {/* Left-to-right gradient fade — left panel into right */}
-      <div style={{
-        position: 'absolute',
-        top: 0, bottom: 0,
-        left: '45%', width: '15%',
-        background: 'linear-gradient(to right, #0A0F1E, transparent)',
-        zIndex: 1, pointerEvents: 'none',
-      }} />
+        {/* Hero Product Image */}
+        <img
+          src={image || '/placeholder.png'}
+          alt={title}
+          className="relative max-h-[220px] max-w-full object-contain filter drop-shadow-[0_20px_30px_rgba(0,0,0,0.7)] transition-all duration-500 ease-out transform group-hover:-translate-y-3 group-hover:scale-105"
+        />
+      </div>
     </div>
+  )
+}
+
+/* ─── Data — update images when ready ───────────────── */
+const BANNERS = [
+  {
+    title: 'ExUk Laptops',
+    discount: '40%',
+    description: 'Fully tested and warranted ex-UK laptops at unbeatable prices. Business-grade performance, budget-friendly.',
+    ctaText: 'Shop Laptops',
+    href: '/products?category=laptops',
+    image: homeAssets.promos2[1], 
+  },
+  {
+    title: 'Garmin GPS Watches',
+    discount: '20%',
+    description: 'For runners, hikers and cyclists. Track every move with precision GPS and all-day battery life.',
+    ctaText: 'Explore Range',
+    href: '/products?brand=garmin',
+    image: homeAssets.promos2[0], 
+  },
+]
+
+/* ─── Section export ─────────────────────────────────── */
+export default function PromoBanners() {
+  return (
+    <section className="px-4 py-12 md:py-16 bg-slate-950">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 xl:grid-cols-2 gap-6">
+        {BANNERS.map(b => (
+          <PromoBanner key={b.title} {...b} />
+        ))}
+      </div>
+    </section>
   )
 }

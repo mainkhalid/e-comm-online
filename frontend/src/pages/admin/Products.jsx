@@ -1,22 +1,23 @@
 import { useState, useEffect, useRef } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import {
   Plus, Search, Edit2, Trash2, Package, ChevronDown,
-  Download, Upload, CheckSquare, Square, MoreHorizontal,
+  Download, Upload, CheckSquare, Square,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import {
   adminGetProducts, adminDeleteProduct,
   adminBulkAction, adminExportCSV, adminImportCSV,
-  adminGetCategories, adminGetBrands,
 } from '../../api/services'
+import { fetchCategories, fetchBrands, invalidateProducts } from '../../store/slices/productsSlice'
 import { getCldThumb } from '../../utils/cloudinaryUtils'
 import { fmt, StockBadge } from './products/ProductShared'
 import ProductModal from './products/ProductModal'
-
 export default function AdminProducts() {
+  const dispatch = useDispatch()
+  const { categories: reduxCategories, brands: reduxBrands } = useSelector(s => s.products)
+
   const [products, setProducts]     = useState([])
-  const [categories, setCategories] = useState([])
-  const [brands, setBrands]         = useState([])
   const [loading, setLoading]       = useState(true)
   const [search, setSearch]         = useState('')
   const [statusFilter, setStatusFilter] = useState('')
@@ -26,19 +27,36 @@ export default function AdminProducts() {
   const [page, setPage]             = useState(1)
   const [count, setCount]           = useState(0)
   const [selected, setSelected]     = useState(new Set())
-  const [bulkOpen, setBulkOpen]     = useState(false)
   const csvRef = useRef()
+
+  // Flatten nested category tree for dropdown
+  const flatten = (cats, depth = 0) => {
+    let flat = []
+    for (const c of cats) {
+      flat.push({ ...c, _depth: depth })
+      if (c.children?.length) flat = flat.concat(flatten(c.children, depth + 1))
+    }
+    return flat
+  }
+  const categories = flatten(reduxCategories)
+  const brands = reduxBrands
+
+  // Fetch categories + brands from Redux cache on mount
+  useEffect(() => {
+    dispatch(fetchCategories())
+    dispatch(fetchBrands())
+  }, [dispatch])
 
   const load = () => {
     setLoading(true)
     const params = { page, page_size: 20 }
-    if (search)       params.search    = search
-    if (catFilter)    params.category  = catFilter
-    if (brandFilter)  params.brand     = brandFilter
-    if (statusFilter === 'active')     params.is_active = true
-    if (statusFilter === 'inactive')   params.is_active = false
-    if (statusFilter === 'featured')   params.is_featured = true
-    if (statusFilter === 'low')        params.low_stock = true
+    if (search)       params.search      = search
+    if (catFilter)    params.category    = catFilter
+    if (brandFilter)  params.brand       = brandFilter
+    if (statusFilter === 'active')   params.is_active  = true
+    if (statusFilter === 'inactive') params.is_active  = false
+    if (statusFilter === 'featured') params.is_featured = true
+    if (statusFilter === 'low')      params.low_stock  = true
     adminGetProducts(params)
       .then(({ data }) => {
         setProducts(data.results || data)
@@ -50,29 +68,13 @@ export default function AdminProducts() {
 
   useEffect(() => { load() }, [page, statusFilter, catFilter, brandFilter])
 
-  useEffect(() => {
-    // Flatten nested category tree for dropdown
-    const flatten = (cats, depth = 0) => {
-      let flat = []
-      for (const c of cats) {
-        flat.push({ ...c, _depth: depth })
-        if (c.children?.length) flat = flat.concat(flatten(c.children, depth + 1))
-      }
-      return flat
-    }
-    adminGetCategories()
-      .then(({ data }) => setCategories(flatten(data.results || data)))
-      .catch(() => {})
-    adminGetBrands()
-      .then(({ data }) => setBrands(data.results || data))
-      .catch(() => {})
-  }, [])
-
   const handleDelete = async (slug, name) => {
     if (!confirm(`Delete "${name}"? This cannot be undone.`)) return
     try {
       await adminDeleteProduct(slug)
       toast.success('Product deleted')
+      // Invalidate public product cache so storefront reflects the change
+      dispatch(invalidateProducts())
       load()
     } catch { toast.error('Could not delete — may have associated orders') }
   }
@@ -93,13 +95,13 @@ export default function AdminProducts() {
 
   const handleBulk = async (action) => {
     if (selected.size === 0) return toast.error('No products selected')
-    const labels = { publish: 'publish', unpublish: 'unpublish', delete: 'delete', feature: 'feature', unfeature: 'unfeature' }
     if (action === 'delete' && !confirm(`Delete ${selected.size} products? This cannot be undone.`)) return
     try {
       const { data } = await adminBulkAction({ action, ids: [...selected] })
       toast.success(data.detail)
       setSelected(new Set())
-      setBulkOpen(false)
+      // Invalidate public cache
+      dispatch(invalidateProducts())
       load()
     } catch { toast.error('Bulk action failed') }
   }
@@ -122,9 +124,15 @@ export default function AdminProducts() {
       const { data } = await adminImportCSV(file)
       toast.success(`Imported: ${data.created} created, ${data.updated} updated`)
       if (data.errors?.length) toast.error(`${data.errors.length} rows had errors`)
+      dispatch(invalidateProducts())
       load()
     } catch { toast.error('Import failed') }
     e.target.value = ''
+  }
+
+  const handleSaved = () => {
+    dispatch(invalidateProducts())
+    load()
   }
 
   const PAGES = Math.ceil(count / 20)
@@ -185,18 +193,18 @@ export default function AdminProducts() {
         <div className="flex gap-2">
           <div className="relative">
             <select value={catFilter} onChange={e => { setCatFilter(e.target.value); setPage(1) }}
-              className="input text-xs py-1.5 pl-2 pr-6 appearance-none"
-              style={{ minWidth: 100 }}>
+              className="input text-xs py-1.5 pl-2 pr-6 appearance-none" style={{ minWidth: 100 }}>
               <option value="">All Categories</option>
-              {categories.map(c => <option key={c.id} value={c.id}>{'—'.repeat(c._depth || 0)} {c.name}</option>)}
+              {categories.map(c => (
+                <option key={c.id} value={c.id}>{'—'.repeat(c._depth || 0)} {c.name}</option>
+              ))}
             </select>
             <ChevronDown size={11} className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none"
               style={{ color: 'var(--text-muted)' }} />
           </div>
           <div className="relative">
             <select value={brandFilter} onChange={e => { setBrandFilter(e.target.value); setPage(1) }}
-              className="input text-xs py-1.5 pl-2 pr-6 appearance-none"
-              style={{ minWidth: 100 }}>
+              className="input text-xs py-1.5 pl-2 pr-6 appearance-none" style={{ minWidth: 100 }}>
               <option value="">All Brands</option>
               {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
             </select>
@@ -213,11 +221,11 @@ export default function AdminProducts() {
           <span className="text-xs font-bold">{selected.size} selected</span>
           <div className="flex gap-1.5 ml-auto">
             {[
-              { action: 'publish', label: 'Publish' },
+              { action: 'publish',   label: 'Publish' },
               { action: 'unpublish', label: 'Unpublish' },
-              { action: 'feature', label: 'Feature' },
+              { action: 'feature',   label: 'Feature' },
               { action: 'unfeature', label: 'Unfeature' },
-              { action: 'delete', label: 'Delete' },
+              { action: 'delete',    label: 'Delete' },
             ].map(({ action, label }) => (
               <button key={action} onClick={() => handleBulk(action)}
                 className="text-[10px] font-bold px-2.5 py-1 rounded-lg transition-colors"
@@ -229,7 +237,9 @@ export default function AdminProducts() {
               </button>
             ))}
           </div>
-          <button onClick={() => setSelected(new Set())} className="text-xs opacity-60 hover:opacity-100 ml-2">Clear</button>
+          <button onClick={() => setSelected(new Set())} className="text-xs opacity-60 hover:opacity-100 ml-2">
+            Clear
+          </button>
         </div>
       )}
 
@@ -294,7 +304,9 @@ export default function AdminProducts() {
                           : <div className="w-full h-full flex items-center justify-center text-xl opacity-20">📦</div>}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold truncate max-w-[180px]" style={{ color: 'var(--text)' }}>{p.name}</p>
+                        <p className="text-sm font-semibold truncate max-w-[180px]" style={{ color: 'var(--text)' }}>
+                          {p.name}
+                        </p>
                         <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{p.brand_name || '—'}</p>
                       </div>
                     </div>
@@ -315,7 +327,7 @@ export default function AdminProducts() {
                         {p.variant_count} variants
                       </span>
                     ) : (
-                      <span className="text-[10px]" style={{ color: 'var(--text-light)' }}>—</span>
+                      <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>—</span>
                     )}
                   </td>
                   <td className="px-4 py-3.5">
@@ -375,7 +387,7 @@ export default function AdminProducts() {
           categories={categories}
           brands={brands}
           onClose={() => setModal(null)}
-          onSaved={load}
+          onSaved={handleSaved}
         />
       )}
     </div>

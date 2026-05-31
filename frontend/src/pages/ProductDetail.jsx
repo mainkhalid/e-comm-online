@@ -8,8 +8,9 @@ import {
   Check, X, MessageSquare, ThumbsUp, Award, Zap,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { getProduct, getReviews, createReview, getProducts } from '../api/services'
+import { getReviews, createReview, getProducts } from '../api/services'
 import { addItem } from '../store/slices/cartSlice'
+import { fetchProductDetail } from '../store/slices/productsSlice'
 import { getCldHero, getCldMini, safeImgUrl } from '../utils/cloudinaryUtils'
 import ProductCard from '../components/product/ProductCard'
 
@@ -114,10 +115,13 @@ export default function ProductDetail() {
   const navigate    = useNavigate()
   const { isAuthenticated } = useSelector(s => s.auth)
 
-  const [product, setProduct]       = useState(null)
+  // Get product from Redux cache if available
+  const cachedProduct = useSelector(s => s.products.productDetails[slug])
+
+  const [product, setProduct]       = useState(cachedProduct || null)
   const [reviews, setReviews]       = useState([])
   const [related, setRelated]       = useState([])
-  const [loading, setLoading]       = useState(true)
+  const [loading, setLoading]       = useState(!cachedProduct)
   const [selectedImg, setSelectedImg] = useState(0)
   const [quantity, setQuantity]     = useState(1)
   const [activeTab, setActiveTab]   = useState('description')
@@ -132,31 +136,45 @@ export default function ProductDetail() {
   const [submitting, setSubmitting]     = useState(false)
 
   useEffect(() => {
-    setLoading(true)
     setSelectedImg(0)
     setQuantity(1)
     setActiveTab('description')
 
-    Promise.all([
-      getProduct(slug),
-      getReviews(slug).catch(() => ({ data: [] })),
-    ])
-      .then(([{ data: prod }, { data: revs }]) => {
-        setProduct(prod)
-        setReviews(revs.results || revs)
-
-        /* Related products */
-        if (prod.category?.slug) {
-          getProducts({ category__slug: prod.category.slug, page_size: 6 })
-            .then(({ data: d }) =>
-              setRelated((d.results || d).filter(p => p.slug !== slug).slice(0, 4))
-            )
-            .catch(() => {})
-        }
+    // Fetch product via Redux (returns cached if not stale)
+    dispatch(fetchProductDetail(slug))
+      .unwrap()
+      .then((result) => {
+        // result is null if cache hit — product already in store
+        // result has { slug, product } if fresh fetch
+        if (result) setProduct(result.product)
+        else if (cachedProduct) setProduct(cachedProduct)
       })
       .catch(() => { toast.error('Product not found'); navigate('/products') })
       .finally(() => setLoading(false))
-  }, [slug])
+
+    // Fetch reviews separately (not cached — always fresh)
+    getReviews(slug)
+      .then(({ data }) => setReviews(data.results || data))
+      .catch(() => {})
+  }, [slug, dispatch])
+
+  // When Redux cache updates, sync local state
+  useEffect(() => {
+    if (cachedProduct && !product) {
+      setProduct(cachedProduct)
+      setLoading(false)
+    }
+  }, [cachedProduct])
+
+  // Fetch related products once product is loaded
+  useEffect(() => {
+    if (!product?.category?.slug) return
+    getProducts({ category__slug: product.category.slug, page_size: 6 })
+      .then(({ data: d }) =>
+        setRelated((d.results || d).filter(p => p.slug !== slug).slice(0, 4))
+      )
+      .catch(() => {})
+  }, [product?.category?.slug, slug])
 
   const handleAddToCart = async () => {
     if (!isAuthenticated) { toast.error('Please sign in first'); return }

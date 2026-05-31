@@ -18,6 +18,8 @@ from .serializers import (
 from apps.core.cache_utils import (
     CATEGORIES_KEY, BRANDS_KEY, FEATURED_KEY,
     CATEGORIES_TTL, BRANDS_TTL, FEATURED_TTL,
+    PRODUCT_LIST_TTL, PRODUCT_SEARCH_TTL,
+    product_list_key, product_search_key,
     invalidate_product_cache, invalidate_categories, invalidate_brands,
 )
 
@@ -112,6 +114,26 @@ class ProductListView(generics.ListAPIView):
             .select_related("category", "brand")
             .prefetch_related("images")
         )
+
+    def list(self, request, *args, **kwargs):
+        # Cache product list results keyed by full query string
+        qs = request.META.get('QUERY_STRING', '')
+        search = request.query_params.get('search', '')
+
+        if search:
+            cache_key = product_search_key(qs)
+            ttl = PRODUCT_SEARCH_TTL
+        else:
+            cache_key = product_list_key(qs)
+            ttl = PRODUCT_LIST_TTL
+
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return Response(cached)
+
+        response = super().list(request, *args, **kwargs)
+        cache.set(cache_key, response.data, ttl)
+        return response
 
 
 class ProductDetailView(generics.RetrieveAPIView):
@@ -242,7 +264,12 @@ class AdminBrandListCreateView(generics.ListCreateAPIView):
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["name"]
     ordering = ["name"]
-    queryset = Brand.objects.all()
+
+    def get_queryset(self):
+        from django.db.models import Count, Q
+        return Brand.objects.annotate(
+            product_count=Count('products', filter=Q(products__is_active=True))
+        )
 
     def perform_create(self, serializer):
         serializer.save()

@@ -7,6 +7,27 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
+// ── Request deduplication ────────────────────────────────────
+// Prevents duplicate GET requests from firing simultaneously
+const pendingRequests = new Map()
+
+api.interceptors.request.use((config) => {
+  // Deduplicate GET requests with the same URL + params
+  if (config.method === 'get') {
+    const key = `${config.url}?${JSON.stringify(config.params || {})}`
+    if (pendingRequests.has(key)) {
+      // Return a new cancel token to abort this duplicate
+      const source = axios.CancelToken.source()
+      config.cancelToken = source.token
+      source.cancel(`Duplicate request cancelled: ${key}`)
+      return config
+    }
+    pendingRequests.set(key, true)
+    config._dedupeKey = key
+  }
+  return config
+})
+
 // ── Attach token ─────────────────────────────────────────────
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token')
@@ -31,8 +52,24 @@ function processQueue(error, token = null) {
 
 // ── Response interceptor ─────────────────────────────────────
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    // Clean up deduplication tracking
+    if (res.config._dedupeKey) {
+      pendingRequests.delete(res.config._dedupeKey)
+    }
+    return res
+  },
   async (error) => {
+    // Clean up deduplication tracking on error
+    if (error.config?._dedupeKey) {
+      pendingRequests.delete(error.config._dedupeKey)
+    }
+
+    // Silently handle cancelled duplicate requests
+    if (axios.isCancel(error)) {
+      return Promise.reject(error)
+    }
+
     const original = error.config
     const url = original?.url || ''
 

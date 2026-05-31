@@ -1,22 +1,23 @@
 import { useState, useEffect } from 'react'
-import { Plus, Edit2, Trash2, FolderTree, ChevronRight, X, Check } from 'lucide-react'
+import { useDispatch } from 'react-redux'
+import { Plus, Edit2, Trash2, FolderTree, ChevronRight, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import {
   adminGetCategories, adminCreateCategory,
   adminUpdateCategory, adminDeleteCategory,
 } from '../../api/services'
+import { invalidateProducts } from '../../store/slices/productsSlice'
 
 const EMPTY = { name: '', slug: '', parent: '', description: '', is_active: true }
 
 function CategoryModal({ cat, categories, onClose, onSaved }) {
-  const [form, setForm]   = useState(cat ? {
+  const [form, setForm] = useState(cat ? {
     name: cat.name, slug: cat.slug || '', parent: cat.parent || '',
     description: cat.description || '', is_active: cat.is_active !== false,
   } : EMPTY)
   const [saving, setSaving] = useState(false)
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
-  // Auto-slug
   const handleName = (v) => {
     set('name', v)
     if (!cat) set('slug', v.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''))
@@ -25,8 +26,8 @@ function CategoryModal({ cat, categories, onClose, onSaved }) {
   const handleSubmit = async (e) => {
     e.preventDefault(); setSaving(true)
     try {
-      if (cat) { await adminUpdateCategory(cat.id, form) }
-      else      { await adminCreateCategory(form) }
+      if (cat) await adminUpdateCategory(cat.id, form)
+      else     await adminCreateCategory(form)
       toast.success(cat ? 'Category updated!' : 'Category created!')
       onSaved(); onClose()
     } catch (err) {
@@ -40,7 +41,7 @@ function CategoryModal({ cat, categories, onClose, onSaved }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: 'rgba(15,23,42,0.65)', backdropFilter: 'blur(4px)' }}
       onClick={onClose}>
-      <div className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl animate-slide-down"
+      <div className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl"
         style={{ background: 'var(--card)' }}
         onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 py-4 border-b"
@@ -113,8 +114,11 @@ function CategoryRow({ cat, depth = 0, all, onEdit, onDelete }) {
           <div className="flex items-center gap-2" style={{ paddingLeft: `${depth * 20}px` }}>
             {children.length > 0 ? (
               <button onClick={() => setExpanded(o => !o)} className="flex-shrink-0">
-                <ChevronRight size={13}
-                  style={{ color: 'var(--text-muted)', transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }} />
+                <ChevronRight size={13} style={{
+                  color: 'var(--text-muted)',
+                  transform: expanded ? 'rotate(90deg)' : 'none',
+                  transition: 'transform 0.15s',
+                }} />
               </button>
             ) : (
               <div className="w-3.5 flex-shrink-0" />
@@ -130,9 +134,7 @@ function CategoryRow({ cat, depth = 0, all, onEdit, onDelete }) {
           </div>
         </td>
         <td className="px-4 py-3.5 text-xs font-mono" style={{ color: 'var(--text-muted)' }}>{cat.slug}</td>
-        <td className="px-4 py-3.5 text-xs" style={{ color: 'var(--text-muted)' }}>
-          {cat.product_count ?? '—'}
-        </td>
+        <td className="px-4 py-3.5 text-xs" style={{ color: 'var(--text-muted)' }}>{cat.product_count ?? '—'}</td>
         <td className="px-4 py-3.5">
           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
             style={{
@@ -155,8 +157,6 @@ function CategoryRow({ cat, depth = 0, all, onEdit, onDelete }) {
           </div>
         </td>
       </tr>
-
-      {/* Children */}
       {expanded && children.map(child => (
         <CategoryRow key={child.id} cat={child} depth={depth + 1} all={all} onEdit={onEdit} onDelete={onDelete} />
       ))}
@@ -165,9 +165,10 @@ function CategoryRow({ cat, depth = 0, all, onEdit, onDelete }) {
 }
 
 export default function AdminCategories() {
+  const dispatch = useDispatch()
   const [categories, setCategories] = useState([])
-  const [loading, setLoading]   = useState(true)
-  const [modal, setModal]       = useState(null) // null=closed, 'new', or category obj
+  const [loading, setLoading] = useState(true)
+  const [modal, setModal]     = useState(null)
 
   const load = () => {
     setLoading(true)
@@ -184,11 +185,16 @@ export default function AdminCategories() {
     try {
       await adminDeleteCategory(id)
       toast.success('Category deleted')
+      dispatch(invalidateProducts()) // clear Redux category cache
       load()
     } catch { toast.error('Could not delete — may have associated products') }
   }
 
-  // Top-level only (no parent or parent not in list)
+  const handleSaved = () => {
+    dispatch(invalidateProducts()) // clear Redux category cache
+    load()
+  }
+
   const topLevel = categories.filter(c => !c.parent || !categories.find(p => String(p.id) === String(c.parent)))
 
   return (
@@ -245,7 +251,7 @@ export default function AdminCategories() {
           cat={modal === 'new' ? null : modal}
           categories={categories}
           onClose={() => setModal(null)}
-          onSaved={load}
+          onSaved={handleSaved}
         />
       )}
     </div>

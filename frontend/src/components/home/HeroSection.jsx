@@ -32,7 +32,7 @@ const SLIDES = [
     cta: 'Shop Now',
     href: '/products?category=laptops',
     accent: '#0284C7',
-    image: homeAssets.heroSlides[1],
+    image: homeAssets.heroSlides[0],
     badges: ['Intel Core i7', 'Business Grade'],
   },
   {
@@ -453,7 +453,7 @@ function HeroSlider() {
             alt={slide.title}
             style={{
               position: 'relative',
-              maxHeight: 240, maxWidth: '100%',
+              maxHeight: 380, maxWidth: '100%',
               objectFit: 'contain',
               filter: 'drop-shadow(0 20px 48px rgba(0,0,0,0.5))',
               animation: 'floatIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both',

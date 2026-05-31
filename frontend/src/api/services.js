@@ -17,7 +17,7 @@ export const getTopRatedProducts = (limit = 12) =>
 export const getProductsByCategory = (category, limit = 12) =>
   api.get('/products/', {
     params: {
-      category__slug: category,   // ← matches what Products.jsx uses
+      category__slug: category,   
       page_size: limit,
     },
   })
