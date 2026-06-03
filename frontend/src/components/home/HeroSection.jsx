@@ -332,6 +332,7 @@ function HeroSlider() {
           gap: 24,
           animation: 'slideIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both',
         }}
+        className="hero-slider-content"
       >
         {/* LEFT — text */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -666,6 +667,40 @@ export default function HeroSection() {
         }
         @media (max-width: 1023px) {
           .hero-grid { grid-template-columns: 1fr !important; }
+          .hero-grid > div:nth-child(2) {
+            min-height: 300px !important;
+          }
+        }
+        @media (max-width: 768px) {
+          .hero-slider-content {
+            grid-template-columns: 1fr !important;
+            padding: 24px 20px !important;
+            min-height: 420px !important;
+            gap: 16px !important;
+          }
+          .hero-slider-content > div:first-child {
+            order: 2;
+          }
+          .hero-slider-content > div:last-child {
+            order: 1;
+          }
+        }
+        @media (max-width: 640px) {
+          .hero-grid > div:nth-child(2) {
+            min-height: 280px !important;
+          }
+          .hero-slider-content {
+            grid-template-columns: 1fr !important;
+            padding: 20px 16px !important;
+            min-height: 360px !important;
+            gap: 12px !important;
+          }
+          .hero-slider-content h2 {
+            font-size: 24px !important;
+          }
+          .hero-slider-content > div:last-child img {
+            max-height: 200px !important;
+          }
         }
       `}</style>
     </section>

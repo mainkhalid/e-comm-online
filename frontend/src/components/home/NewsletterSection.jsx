@@ -13,7 +13,6 @@ export default function NewsletterSection() {
 
     setLoading(true)
     try {
-      // TODO: POST /api/newsletter/subscribe/
       await new Promise(r => setTimeout(r, 800))
       setSubscribed(true)
       toast.success('You\'re subscribed! 🎉')
@@ -28,14 +27,6 @@ export default function NewsletterSection() {
   return (
     <section style={{ background: 'var(--navy)' }} className="py-14 px-4">
       <div className="max-w-3xl mx-auto text-center">
-
-        {/* Icon */}
-        <div
-          className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-6"
-          style={{ background: 'rgba(255,107,43,0.15)', border: '1px solid rgba(255,107,43,0.25)' }}
-        >
-          <Mail size={24} style={{ color: 'var(--orange)' }} />
-        </div>
 
         <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
           Deals straight to your inbox

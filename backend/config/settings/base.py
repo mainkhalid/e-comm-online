@@ -172,6 +172,7 @@ CORS_ALLOWED_ORIGINS = env.list(
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "https://nixxon-technologies-ltd.pages.dev",
+        "https://nixxontechnologies.co.ke"
     ]
 )
 CORS_ALLOW_CREDENTIALS = True

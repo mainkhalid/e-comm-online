@@ -44,7 +44,7 @@ const SOCIALS = [
   { icon: MessageCircle,  href: 'https://wa.me/254705125957', label: 'WhatsApp' },
 ]
 
-const PAYMENTS = ['M-Pesa', 'Equity Bank', 'Stanbic Bank', 'Cash on Delivery']
+const PAYMENTS = ['M-Pesa', 'Equity Bank', 'Cash on Delivery']
 
 export default function Footer() {
   const isExternal = (href) => href.startsWith('mailto:') || href.startsWith('http') || href.startsWith('#')
@@ -80,9 +80,9 @@ export default function Footer() {
             {/* Contact */}
             <div className="space-y-2.5 mb-7">
               {[
-                [MapPin, 'CBD,Moi Avenue ,Nairobi, Kenya'],
+                [MapPin, 'Moi Avenue,Bazaar Plaza ,Nairobi'],
                 [Phone,  '+254 705 125 957'],
-                [Mail,   'hello@nixxontechnologies.co.ke'],
+                [Mail,   'nixxontechnologies@gmail.com'],
               ].map(([Icon, text]) => (
                 <div key={text} className="flex items-center gap-2.5 text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
                   <Icon size={14} style={{ color: 'var(--orange)', flexShrink: 0 }} />
@@ -158,7 +158,7 @@ export default function Footer() {
         <div className="max-w-7xl mx-auto px-4 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
 
           <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
-            &copy; {new Date().getFullYear()} TechZone Kenya Ltd. All rights reserved.
+            &copy; {new Date().getFullYear()} Nixxon Technologies Kenya Ltd. All rights reserved.
           </p>
 
           {/* Payment badges */}
