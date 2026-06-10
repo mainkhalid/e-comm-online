@@ -4,9 +4,9 @@ import toast from 'react-hot-toast'
 import { MapPin, Phone, Mail, Clock, Send, MessageCircle } from 'lucide-react'
 
 const CONTACT_INFO = [
-  { icon: MapPin, label: 'Visit Us', value: 'CBD, Moi Avenue, Nairobi, Kenya', href: null },
-  { icon: Phone, label: 'Call Us', value: '+254 705 125 957', href: 'tel:+254705125957' },
-  { icon: Mail, label: 'Email Us', value: 'hello@nixxontechnologies.co.ke', href: 'mailto:hello@nixxontechnologies.co.ke' },
+  { icon: MapPin, label: 'Visit Us', value: 'Bazaar Plaza, Moi Avenue, Nairobi', href: null },
+  { icon: Phone, label: 'Call Us', value: '+254 722 363 470', href: 'tel:+254722363470' },
+  { icon: Mail, label: 'Email Us', value: 'sales@nixxontechnologies.co.ke', href: 'mailto:sales@nixxontechnologies.co.ke' },
   { icon: Clock, label: 'Working Hours', value: 'Mon–Sat: 8:00 AM – 6:00 PM', href: null },
 ]
 
@@ -76,7 +76,7 @@ export default function Contact() {
 
               {/* WhatsApp CTA */}
               <a
-                href="https://wa.me/254705125957"
+                href="https://wa.me/254722363470"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 p-4 rounded-xl text-white transition-transform hover:scale-[1.02]"
@@ -108,7 +108,7 @@ export default function Contact() {
                       className="input w-full text-sm"
                       value={form.name}
                       onChange={e => setForm({ ...form, name: e.target.value })}
-                      placeholder="John Doe"
+                      placeholder="Name"
                     />
                   </div>
                   <div>

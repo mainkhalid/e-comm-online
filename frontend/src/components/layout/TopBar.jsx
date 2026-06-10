@@ -37,14 +37,14 @@ export default function TopBar() {
               className="flex items-center gap-1.5 text-slate-300 hover:text-white transition-colors"
             >
               <Phone size={11} />
-              +254 705 125 957
+              +254 722 363470
             </a>
             <a
-              href="mailto:hello@nixxontechnologies.co.ke"
+              href="mailto:sales@nixxontechnologies.co.ke"
               className="flex items-center gap-1.5 text-slate-300 hover:text-white transition-colors"
             >
               <Mail size={11} />
-              hello@nixxontechnologies.co.ke
+              sales@nixxontechnologies.co.ke
             </a>
 
             <div className="w-px h-3 bg-white/20" />

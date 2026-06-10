@@ -39,9 +39,9 @@ const NAV_COLS = [
 ]
 
 const SOCIALS = [
-  { icon: Facebook,       href: '#', label: 'Facebook' },
+  { icon: Facebook,       href: 'https://www.facebook.com/Nixxontechnologies', label: 'Facebook' },
   { icon: Instagram,      href: '#', label: 'Instagram' },
-  { icon: MessageCircle,  href: 'https://wa.me/254705125957', label: 'WhatsApp' },
+  { icon: MessageCircle,  href: 'https://wa.me/254722363470', label: 'WhatsApp' },
 ]
 
 const PAYMENTS = ['M-Pesa', 'Equity Bank', 'Cash on Delivery']
@@ -81,8 +81,8 @@ export default function Footer() {
             <div className="space-y-2.5 mb-7">
               {[
                 [MapPin, 'Moi Avenue,Bazaar Plaza ,Nairobi'],
-                [Phone,  '+254 705 125 957'],
-                [Mail,   'nixxontechnologies@gmail.com'],
+                [Phone,  '+254 722 363470'],
+                [Mail,   'support@nixxontechnologies.co.ke'],
               ].map(([Icon, text]) => (
                 <div key={text} className="flex items-center gap-2.5 text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
                   <Icon size={14} style={{ color: 'var(--orange)', flexShrink: 0 }} />

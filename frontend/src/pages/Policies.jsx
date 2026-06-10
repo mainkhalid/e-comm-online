@@ -45,7 +45,7 @@ function ReturnPolicy() {
       </Section>
       <Section title="4. How to Initiate a Return">
         <p>
-          Contact our support team via WhatsApp at <strong style={{ color: 'var(--text)' }}>+254 705 125 957</strong> or
+          Contact our support team via WhatsApp at <strong style={{ color: 'var(--text)' }}>+254 722 363470</strong> or
           email <strong style={{ color: 'var(--text)' }}>support@nixxontechnologies.co.ke</strong> with:
         </p>
         <ul className="list-disc pl-5 space-y-1">
@@ -77,7 +77,7 @@ function ShippingPolicy() {
       </Section>
       <Section title="2. Shipping Costs">
         <p>
-          Orders above <strong style={{ color: 'var(--text)' }}>KSh 5,000</strong> qualify for <strong style={{ color: 'var(--success)' }}>FREE delivery</strong> within Nairobi.
+          Orders above <strong style={{ color: 'var(--text)' }}>KSh 100,000</strong> qualify for <strong style={{ color: 'var(--success)' }}>FREE delivery</strong> within Nairobi.
           Orders below this threshold incur a flat delivery fee of KSh 300.
         </p>
         <p>Rates for upcountry deliveries are calculated at checkout based on location and package weight.</p>
@@ -155,7 +155,7 @@ export default function Policies() {
               style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
             >
               <strong style={{ color: 'var(--text)' }}>Questions?</strong> Contact our team at{' '}
-              <strong style={{ color: 'var(--orange)' }}>+254 705 125 957</strong> (WhatsApp) or{' '}
+              <strong style={{ color: 'var(--orange)' }}>+254 722 363470</strong> (WhatsApp) or{' '}
               <strong style={{ color: 'var(--orange)' }}>support@nixxontechnologies.co.ke</strong>
             </div>
           </div>

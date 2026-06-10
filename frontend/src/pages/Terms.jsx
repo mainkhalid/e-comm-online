@@ -35,7 +35,7 @@ export default function Terms() {
           >
             <Section title="1. Acceptance of Terms">
               <p>
-                By accessing and using the Nixxon Technologies / TechZone Kenya website and services, you agree to be
+                By accessing and using the Nixxon Technologies website and services, you agree to be
                 bound by these Terms & Conditions. If you do not agree, please do not use our services.
               </p>
             </Section>
