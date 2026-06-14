@@ -45,17 +45,12 @@ export default function Register() {
 
   return (
     <>
-      <Helmet><title>Create account — TechZone</title></Helmet>
+      <Helmet><title>Create account — Nixxon Technologies</title></Helmet>
       <div className="min-h-[calc(100vh-200px)] flex items-center justify-center px-4 py-16 bg-gray-50">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <Link to="/" className="inline-flex items-center gap-2 mb-6">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center shadow-md">
-                <span className="text-white font-bold text-xl">T</span>
-              </div>
-            </Link>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Create account</h1>
-            <p className="text-gray-500">Join thousands of TechZone customers</p>
+            <p className="text-gray-500">Join thousands of Nixxon Technologies customers</p>
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
@@ -63,12 +58,12 @@ export default function Register() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">First name</label>
-                  <input type="text" required placeholder="John" className={inputClass}
+                  <input type="text" required placeholder="First Name" className={inputClass}
                     value={form.first_name} onChange={set('first_name')} />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Last name</label>
-                  <input type="text" required placeholder="Doe" className={inputClass}
+                  <input type="text" required placeholder="Last Name" className={inputClass}
                     value={form.last_name} onChange={set('last_name')} />
                 </div>
               </div>
@@ -95,7 +90,7 @@ export default function Register() {
                   value={form.password2} onChange={set('password2')} />
               </div>
               <button type="submit" disabled={loading}
-                className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition-all disabled:opacity-50 active:scale-[0.98] shadow-md shadow-blue-600/20 mt-2">
+                className="w-full flex items-center justify-center gap-2 bg-orange-500 text-white font-bold py-3.5 rounded-xl hover:bg-orange-600 transition-all disabled:opacity-50 active:scale-[0.98] shadow-md shadow-orange-500/20 mt-2">
                 {loading ? 'Creating…' : 'Create Account'}
                 {!loading && <ArrowRight size={18} />}
               </button>
@@ -104,7 +99,7 @@ export default function Register() {
 
           <p className="text-center text-sm text-gray-500 mt-6">
             Already have an account?{' '}
-            <Link to="/login" className="font-semibold text-blue-600 hover:text-blue-700 transition">Sign in</Link>
+            <Link to="/login" className="font-semibold text-orange-500 hover:text-orange-600 transition">Sign in</Link>
           </p>
         </div>
       </div>

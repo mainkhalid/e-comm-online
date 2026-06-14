@@ -166,7 +166,7 @@ export default function Profile() {
 
   return (
     <>
-      <Helmet><title>My Profile — TechZone</title></Helmet>
+      <Helmet><title>My Profile — Nixxon Technologies</title></Helmet>
 
       {/* ── Profile info ── */}
       <SectionCard title="Personal Information" icon={User}>

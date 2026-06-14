@@ -265,7 +265,7 @@ export default function Checkout() {
   if (items.length === 0 && step < 3) {
     return (
       <>
-        <Helmet><title>Checkout — TechZone</title></Helmet>
+        <Helmet><title>Checkout — Nixxon Technologies</title></Helmet>
         <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--bg)' }}>
           <div className="text-center">
             <p className="text-lg font-semibold mb-5" style={{ color: 'var(--text)' }}>Your cart is empty</p>
@@ -351,8 +351,8 @@ export default function Checkout() {
               Back to cart
             </Link>
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold" style={{ background: 'var(--navy)' }}>TZ</div>
-              <span className="font-bold text-sm hidden sm:block" style={{ color: 'var(--navy)' }}>Tech<span style={{ color: 'var(--orange)' }}>Zone</span></span>
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold" style={{ background: 'var(--navy)' }}>NT</div>
+              <span className="font-bold text-sm hidden sm:block" style={{ color: 'var(--navy)' }}>Nixxon<span style={{ color: 'var(--orange)' }}> Technologies</span></span>
             </Link>
             <div className="flex items-center gap-1 text-xs" style={{ color: 'var(--text-muted)' }}>
               <Shield size={13} style={{ color: 'var(--success)' }} />

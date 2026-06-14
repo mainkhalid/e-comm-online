@@ -49,7 +49,7 @@ export default function Home() {
   return (
     <>
       <Helmet>
-        <title>TechZone — Premium Tech Products in Kenya</title>
+        <title>Nixxon Technologies — Premium Tech Products in Kenya</title>
         <meta name="description" content="Shop the best laptops, desktops, tablets, and accessories in Kenya. Fast shipping, M-Pesa payments, 30-day returns." />
       </Helmet>
 

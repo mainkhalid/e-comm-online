@@ -140,16 +140,26 @@ export default function ProductDetail() {
     setQuantity(1)
     setActiveTab('description')
 
-    // Fetch product via Redux (returns cached if not stale)
     dispatch(fetchProductDetail(slug))
       .unwrap()
       .then((result) => {
-        // result is null if cache hit — product already in store
-        // result has { slug, product } if fresh fetch
-        if (result) setProduct(result.product)
-        else if (cachedProduct) setProduct(cachedProduct)
+        // result is null  → cache hit, product already in Redux store
+        // result is object → fresh fetch, contains { slug, product }
+        if (result?.product) {
+          setProduct(result.product)
+        }
+        // null (cache hit): cachedProduct selector already has the value;
+        // the sync effect below will pick it up — nothing to do here
       })
-      .catch(() => { toast.error('Product not found'); navigate('/products') })
+      .catch(() => {
+        // Only navigate away on a genuine failure.
+        // If the product is already in cache the thunk may have short-circuited
+        // and the rejection is spurious — stay on the page in that case.
+        if (!cachedProduct) {
+          toast.error('Product not found')
+          navigate('/products')
+        }
+      })
       .finally(() => setLoading(false))
 
     // Fetch reviews separately (not cached — always fresh)
@@ -158,9 +168,9 @@ export default function ProductDetail() {
       .catch(() => {})
   }, [slug, dispatch])
 
-  // When Redux cache updates, sync local state
+  // Sync whenever the Redux cache entry for this slug is populated / updated
   useEffect(() => {
-    if (cachedProduct && !product) {
+    if (cachedProduct) {
       setProduct(cachedProduct)
       setLoading(false)
     }

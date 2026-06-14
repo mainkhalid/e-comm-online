@@ -7,16 +7,12 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-// ── Request deduplication ────────────────────────────────────
-// Prevents duplicate GET requests from firing simultaneously
 const pendingRequests = new Map()
 
 api.interceptors.request.use((config) => {
-  // Deduplicate GET requests with the same URL + params
-  if (config.method === 'get') {
+  if (config.method === 'get' && config.dedupe) {
     const key = `${config.url}?${JSON.stringify(config.params || {})}`
     if (pendingRequests.has(key)) {
-      // Return a new cancel token to abort this duplicate
       const source = axios.CancelToken.source()
       config.cancelToken = source.token
       source.cancel(`Duplicate request cancelled: ${key}`)
@@ -65,9 +61,10 @@ api.interceptors.response.use(
       pendingRequests.delete(error.config._dedupeKey)
     }
 
-    // Silently handle cancelled duplicate requests
+    // Silently resolve cancelled duplicate requests — returning null means
+    // the thunk payload is null (cache-hit path), never throws, never navigates
     if (axios.isCancel(error)) {
-      return Promise.reject(error)
+      return Promise.resolve({ data: null, _cancelled: true })
     }
 
     const original = error.config
@@ -103,7 +100,6 @@ api.interceptors.response.use(
       const refresh = localStorage.getItem('refresh_token')
       if (!refresh) throw new Error('No refresh token')
 
-      // ✅ use SAME api instance (important fix)
       const { data } = await api.post('/auth/token/refresh/', { refresh })
 
       const newToken = data.access

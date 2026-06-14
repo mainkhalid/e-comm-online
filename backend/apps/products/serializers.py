@@ -167,26 +167,42 @@ class ProductDetailSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         primary_img = obj.images.filter(is_primary=True).first()
         image_url = request.build_absolute_uri(primary_img.image.url) if (primary_img and request) else ""
 
-        return {
+        canonical = obj.canonical_url or f"https://www.nixxontechnologies.co.ke/products/{obj.slug}/"
+
+        schema = {
             "@context": "https://schema.org",
             "@type": "Product",
             "name": obj.name,
-            "description": obj.short_description,
+            "description": obj.short_description or obj.meta_description,
             "sku": obj.sku,
-            "brand": {"@type": "Brand", "name": obj.brand.name if obj.brand else ""},
+            "url": canonical,
+            "brand": {
+                "@type": "Brand",
+                "name": obj.brand.name if obj.brand else "Nixxon Technologies",
+            },
             "image": image_url,
             "offers": {
                 "@type": "Offer",
                 "priceCurrency": "KES",
                 "price": str(obj.current_price),
                 "availability": "https://schema.org/InStock" if obj.in_stock else "https://schema.org/OutOfStock",
+                "url": canonical,
+                "seller": {
+                    "@type": "Organization",
+                    "name": "Nixxon Technologies",
+                    "url": "https://www.nixxontechnologies.co.ke",
+                },
             },
-            "aggregateRating": {
+        }
+
+        if obj.review_count > 0:
+            schema["aggregateRating"] = {
                 "@type": "AggregateRating",
                 "ratingValue": str(obj.average_rating),
                 "reviewCount": str(obj.review_count),
-            } if obj.review_count > 0 else None,
-        }
+            }
+
+        return schema
 
 
 class AdminProductWriteSerializer(serializers.ModelSerializer):

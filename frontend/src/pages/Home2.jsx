@@ -4,7 +4,6 @@ import { useDispatch, useSelector } from 'react-redux'
 import { fetchFeatured, fetchByCategory, fetchTopRated } from '../store/slices/productsSlice'
 import { addItem } from '../store/slices/cartSlice'
 import toast from 'react-hot-toast'
-
 import HeroSection    from '../components/home/HeroSection'
 import PromoBanner    from '../components/promo/PromoBanner'
 import PopularDevices from '../components/home/PopularDevices'
@@ -14,27 +13,18 @@ import NewsletterSection from '../components/home/NewsletterSection'
 import CTASection        from '../components/home/CTASection'
 import LoadingSpinner    from '../components/common/LoadingSpinner'
 
-/* ─── Stale time ─────────────────────────────────────── */
-const STALE_MS = 10 * 60 * 1000
-
-function isStale(fetchedAt) {
-  if (!fetchedAt) return true
-  return Date.now() - fetchedAt > STALE_MS
-}
-
-/* ─── Homepage ───────────────────────────────────────── */
 export default function Home() {
   const dispatch = useDispatch()
-  const { featured, topRated, byCategory, loading, fetchedAt } = useSelector(s => s.products)
+  const { featured, topRated, byCategory, loading } = useSelector(s => s.products)
 
   const laptops  = byCategory['laptops']  || []
   const desktops = byCategory['desktops'] || []
 
   useEffect(() => {
-    if (isStale(fetchedAt.featured))  dispatch(fetchFeatured())
-    if (isStale(fetchedAt.laptops))   dispatch(fetchByCategory('laptops'))
-    if (isStale(fetchedAt.desktops))  dispatch(fetchByCategory('desktops'))
-    if (isStale(fetchedAt.topRated))  dispatch(fetchTopRated())
+    dispatch(fetchFeatured())
+    dispatch(fetchByCategory('laptops'))
+    dispatch(fetchByCategory('desktops'))
+    dispatch(fetchTopRated())
   }, [dispatch])
 
   const handleAddToCart = (productId) => {
@@ -55,7 +45,6 @@ export default function Home() {
 
       <HeroSection />
       <PopularDevices />
-
       <PromoBanner />
 
       {isFirstLoad && (
@@ -71,7 +60,6 @@ export default function Home() {
           title="Featured Products"
         />
       )}
-
       {laptops.length > 0 && (
         <FeaturedProductsCarousel
           products={laptops}
@@ -79,7 +67,6 @@ export default function Home() {
           title="Laptops"
         />
       )}
-
       {desktops.length > 0 && (
         <FeaturedProductsCarousel
           products={desktops}
@@ -87,7 +74,6 @@ export default function Home() {
           title="Desktops"
         />
       )}
-
       {topRated.length > 0 && (
         <FeaturedProductsCarousel
           products={topRated}

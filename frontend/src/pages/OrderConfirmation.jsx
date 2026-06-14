@@ -123,7 +123,7 @@ export default function OrderConfirmation() {
               Order Confirmed! 🎉
             </h1>
             <p className="text-base mb-3" style={{ color: 'rgba(255,255,255,0.65)' }}>
-              Thank you for shopping with TechZone
+              Thank you for shopping with Nixxon Technologies
             </p>
             <div
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold"
@@ -311,8 +311,8 @@ export default function OrderConfirmation() {
               +254 705 125 957
             </a>{' '}
             or email{' '}
-            <a href="mailto:hello@techzone.co.ke" className="font-semibold" style={{ color: 'var(--orange)' }}>
-              hello@techzone.co.ke
+            <a href="mailto:sales@nixxontechnologies.co.ke" className="font-semibold" style={{ color: 'var(--orange)' }}>
+              sales@nixxontechnologies.co.ke
             </a>
           </div>
         </div>

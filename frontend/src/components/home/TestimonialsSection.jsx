@@ -22,7 +22,7 @@ export default function TestimonialsSection() {
       id: 3,
       name: 'Mike Nganga',
       role: 'Software Developer',
-      content: 'Fast delivery, genuine products, and competitive pricing. I recommend TechZone to all my colleagues. Worth every penny!',
+      content: 'Fast delivery, genuine products, and competitive pricing. I recommend Nixxon Technologies to all my colleagues. Worth every penny!',
       rating: 5,
       avatar: '👨‍💻',
     },
@@ -37,7 +37,7 @@ export default function TestimonialsSection() {
             Loved by Thousands
           </h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Read what our happy customers have to say about their experience shopping with TechZone
+            Read what our happy customers have to say about their experience shopping with Nixxon Technologies
           </p>
         </div>
 

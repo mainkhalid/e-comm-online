@@ -1,5 +1,5 @@
 """
-Base settings for TechZone e-commerce backend.
+Base settings for Nixxon Technologies e-commerce backend.
 """
 import ssl
 import environ
@@ -85,7 +85,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 # Database — PostgreSQL
 DATABASES = {
-    "default": env.db("DATABASE_URL", default="postgres://postgres:postgres@localhost:5432/techzone_db")
+    "default": env.db("DATABASE_URL", default="postgres://postgres:postgres@localhost:5432/nixxon_db")
 }
 
 # Custom user model
@@ -124,7 +124,7 @@ EMAIL_PORT = env.int("EMAIL_PORT", default=587)
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="TechZone <noreply@nixxontechnologies.co.ke>")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="Nixxon Technologies <noreply@nixxontechnologies.co.ke>")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -150,8 +150,8 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.UserRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "anon": "100/hour",
-        "user": "1000/hour",
+        "anon": "300/minute",
+        "user": "600/minute",
     },
 }
 
@@ -209,11 +209,11 @@ MPESA_ENVIRONMENT = env("MPESA_ENVIRONMENT", default="sandbox")
 
 # API Docs
 SPECTACULAR_SETTINGS = {
-    "TITLE": "TechZone API",
-    "DESCRIPTION": "E-commerce API for computers and accessories",
+    "TITLE": "Nixxon Technologies API",
+    "DESCRIPTION": "E-commerce API for Nixxon Technologies — computers and accessories",
     "VERSION": "1.0.0",
 }
 
 # Site info
-SITE_URL = env("SITE_URL", default="http://localhost:5173")
-SITE_NAME = "TechZone"
+SITE_URL = env("SITE_URL", default="https://www.nixxontechnologies.co.ke")
+SITE_NAME = "Nixxon Technologies"

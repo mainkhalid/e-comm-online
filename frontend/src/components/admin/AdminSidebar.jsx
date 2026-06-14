@@ -36,10 +36,10 @@ export default function AdminSidebar() {
         <div className="p-6 border-b border-gray-700">
           <Link to="/admin" className="flex items-center gap-2">
             <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-green-700 rounded flex items-center justify-center">
-              <span className="text-white font-bold text-lg">T</span>
+              <span className="text-white font-bold text-lg">N</span>
             </div>
             <div>
-              <div className="font-bold text-white">TechZone</div>
+              <div className="font-bold text-white">Nixxon Technologies</div>
               <div className="text-xs text-gray-400">Admin Panel</div>
             </div>
           </Link>

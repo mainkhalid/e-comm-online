@@ -447,10 +447,10 @@ export default function ProductModal({ product, categories, brands, onClose, onS
                       Search Preview
                     </p>
                     <p className="text-sm font-semibold" style={{ color: '#1a0dab' }}>
-                      {form.meta_title || form.name || 'Product Title'} | TechZone
+                      {form.meta_title || form.name || 'Product Title'} | Nixxon Technologies
                     </p>
                     <p className="text-xs mt-0.5" style={{ color: 'var(--success)' }}>
-                      techzone.co.ke/products/{form.name?.toLowerCase().replace(/\s+/g, '-') || 'slug'}
+                      nixxontechnologies.co.ke/products/{form.name?.toLowerCase().replace(/\s+/g, '-') || 'slug'}
                     </p>
                     <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
                       {form.meta_description || form.short_description || 'Product description will appear here...'}

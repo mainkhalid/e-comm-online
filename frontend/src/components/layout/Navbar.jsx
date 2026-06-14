@@ -34,13 +34,13 @@ export default function Navbar() {
       {/* Top promotional bar */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2 px-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center text-sm">
-          <span className="hidden sm:inline">🎉 Welcome to TechZone — Premium Tech Products in Kenya</span>
-          <span className="sm:hidden text-xs">🎉 TechZone — Premium Tech</span>
+          <span className="hidden sm:inline">🎉 Welcome to Nixxon Technologies — Premium Tech Products in Kenya</span>
+          <span className="sm:hidden text-xs">🎉 Nixxon Technologies — Premium Tech</span>
           <div className="flex items-center gap-4">
             {isAuthenticated && (
               <Link to="/account/orders" className="hover:underline transition text-xs sm:text-sm">Track Order</Link>
             )}
-            <a href="mailto:hello@techzone.co.ke" className="hover:underline transition text-xs sm:text-sm">Support</a>
+            <a href="mailto:sales@nixxontechnologies.co.ke" className="hover:underline transition text-xs sm:text-sm">Support</a>
           </div>
         </div>
       </div>

@@ -146,7 +146,7 @@ export default function AdminSettings() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Store Name">
                 <input value={data.store_name || ''} onChange={e => set('store_name', e.target.value)}
-                  placeholder="TechZone" className="input w-full text-sm" />
+                  placeholder="Nixxon Technologies" className="input w-full text-sm" />
               </Field>
               <Field label="Tagline">
                 <input value={data.store_tagline || ''} onChange={e => set('store_tagline', e.target.value)}

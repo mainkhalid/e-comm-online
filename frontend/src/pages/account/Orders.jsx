@@ -225,7 +225,7 @@ export default function Orders() {
 
   return (
     <>
-      <Helmet><title>My Orders — TechZone</title></Helmet>
+      <Helmet><title>My Orders — Nixxon Technologies</title></Helmet>
 
       {/* Filter tabs */}
       <div className="flex gap-1.5 mb-5 overflow-x-auto pb-1">

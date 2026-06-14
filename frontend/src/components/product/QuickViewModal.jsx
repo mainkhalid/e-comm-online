@@ -135,7 +135,7 @@ export default function QuickViewModal({ product: listProduct, onClose }) {
 
               {/* Brand */}
               <p className="text-xs font-bold uppercase tracking-widest mb-1.5" style={{ color: 'var(--orange)' }}>
-                {product.brand?.name || 'TechZone'}
+                {product.brand?.name || 'Nixxon Technologies'}
               </p>
 
               {/* Name */}

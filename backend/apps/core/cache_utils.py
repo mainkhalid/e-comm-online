@@ -27,7 +27,7 @@ def product_search_key(query_string: str) -> str:
     return f"tz:search:{query_string}"
 
 
-# ── Invalidation helpers ──────────────────────────────────────
+
 
 def invalidate_store_settings():
     """Call after saving StoreSettings."""

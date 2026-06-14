@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { Provider, useSelector, useDispatch } from 'react-redux'
 import { HelmetProvider } from 'react-helmet-async'
 import { Toaster } from 'react-hot-toast'
@@ -40,9 +40,15 @@ import AdminBrands     from './pages/admin/Brands'
 import AdminSettings   from './pages/admin/Settings'
 
 
-// ── Route guards ─────────────────────────────────────────────
 
-/** Blocks unauthenticated users — redirects to /login */
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [pathname])
+  return null
+}
+
 function RequireAuth({ children }) {
   const { isAuthenticated, initializing } = useSelector(s => s.auth)
   if (initializing) return <div className="min-h-screen flex items-center justify-center">
@@ -63,8 +69,6 @@ function RequireAdmin({ children }) {
   return children
 }
 
-
-// ── Store layout (with Navbar + Footer) ──────────────────────
 
 function StoreLayout() {
   return (
@@ -114,19 +118,17 @@ function StoreLayout() {
 }
 
 
-// ── Root app — initialises auth on mount ─────────────────────
-
 function AppRoutes() {
   const dispatch = useDispatch()
 
-  // Verify token on every page load — sets isAuthenticated correctly
   useEffect(() => {
     dispatch(initAuth())
   }, [dispatch])
 
   return (
-    <Routes>
-      {/* Admin — no Navbar/Footer, staff only */}
+    <>
+      <ScrollToTop />
+      <Routes>
       <Route path="/admin" element={
         <RequireAdmin><AdminLayout /></RequireAdmin>
       }>
@@ -143,6 +145,7 @@ function AppRoutes() {
       {/* Store */}
       <Route path="/*" element={<StoreLayout />} />
     </Routes>
+    </>
   )
 }
 

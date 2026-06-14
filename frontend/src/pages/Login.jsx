@@ -53,11 +53,6 @@ export default function Login() {
       <div className="min-h-[calc(100vh-200px)] flex items-center justify-center px-4 py-16 bg-gray-50">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <Link to="/" className="inline-flex items-center gap-2 mb-6">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center shadow-md">
-                <span className="text-white font-bold text-xl">T</span>
-              </div>
-            </Link>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back</h1>
             <p className="text-gray-500">Sign in to Nixxon Technologies</p>
           </div>
@@ -83,7 +78,7 @@ export default function Login() {
                 </div>
               </div>
               <button type="submit" disabled={loading}
-                className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition-all disabled:opacity-50 active:scale-[0.98] shadow-md shadow-blue-600/20">
+                className="w-full flex items-center justify-center gap-2 bg-orange-500 text-white font-bold py-3.5 rounded-xl hover:bg-orange-600 transition-all disabled:opacity-50 active:scale-[0.98] shadow-md shadow-orange-500/20">
                 {loading ? 'Signing in…' : 'Sign In'}
                 {!loading && <ArrowRight size={18} />}
               </button>
@@ -92,7 +87,7 @@ export default function Login() {
 
           <p className="text-center text-sm text-gray-500 mt-6">
             Don't have an account?{' '}
-            <Link to="/register" className="font-semibold text-blue-600 hover:text-blue-700 transition">Create one</Link>
+            <Link to="/register" className="font-semibold text-orange-500 hover:text-orange-600 transition">Create one</Link>
           </p>
         </div>
       </div>

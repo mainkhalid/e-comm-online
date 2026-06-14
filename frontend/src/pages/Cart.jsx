@@ -71,7 +71,7 @@ export default function Cart() {
 
   return (
     <>
-      <Helmet><title>{`Shopping Cart (${items.length}) — TechZone`}</title></Helmet>
+      <Helmet><title>{`Shopping Cart (${items.length}) — Nixxon Technologies`}</title></Helmet>
 
       <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
 

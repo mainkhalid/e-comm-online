@@ -9,7 +9,7 @@ class Category(MPTTModel):
     slug = models.SlugField(unique=True, max_length=200)
     parent = TreeForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL, related_name="children")
     description = models.TextField(blank=True)
-    image = models.ImageField(upload_to="techzone/categories/", blank=True, null=True)
+    image = models.ImageField(upload_to="nixxon/categories/", blank=True, null=True)
     is_active = models.BooleanField(default=True)
 
     # SEO fields
@@ -34,7 +34,7 @@ class Category(MPTTModel):
 class Brand(models.Model):
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True)
-    logo = models.ImageField(upload_to="techzone/brands/", blank=True, null=True)
+    logo = models.ImageField(upload_to="nixxon/brands/", blank=True, null=True)
     description = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
 
@@ -135,7 +135,7 @@ class Product(models.Model):
             self.slug = slugify(self.name)
         # Auto-generate meta title if not set
         if not self.meta_title:
-            self.meta_title = f"{self.name[:60]} | TechZone"
+            self.meta_title = f"{self.name[:60]} | Nixxon Technologies"
         # Auto-generate meta description if not set
         if not self.meta_description and self.short_description:
             self.meta_description = self.short_description[:160]
@@ -144,7 +144,7 @@ class Product(models.Model):
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="images")
-    image = models.ImageField(upload_to="techzone/products/")
+    image = models.ImageField(upload_to="nixxon/products/")
     alt_text = models.CharField(max_length=200, blank=True)
     is_primary = models.BooleanField(default=False)
     order = models.PositiveIntegerField(default=0)
